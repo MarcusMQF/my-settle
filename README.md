@@ -1,39 +1,58 @@
-# MySettle
+<p align="center">
+  <img src="assets/images/mysettle_icon.png" alt="MySettle Logo" width="300"/>
+</p>
 
-> 🏆 Digital ID Solution Hackathon Project
+<p align="center">
+  <strong>Digital Accident Resolution Platform</strong><br/>
+  Report minor road accidents without visiting a police station — verified through <strong>MyDigital ID</strong>.
+</p>
 
-**MySettle** is a digital accident resolution platform that enables Malaysian drivers to report minor road accidents without visiting a police station and complicated procedure — all verified through **MyDigital ID**.
+## The Problem
 
-## 🚗 Problem Statement
+Current accident reporting in Malaysia is inefficient and stressful:
 
-Traditional accident reporting requires drivers to:
-- Wait at the accident scene for hours
-- Visit police stations for paperwork
-- Deal with lengthy manual verification processes
+- **Traffic Congestion**: Minor accidents block roads for hours because drivers are afraid to move, and discussions take time.
+- **Trust Issue**: Drivers currently rely on checking physical ICs because there is no guarantee the person is who they claim to be.
+- **Wasted Time**: Citizens must visit the police station, often resulting in an average wait of 3 hours.
+- **Outdated e-Reporting**: Existing e-Reporting systems only support single-vehicle accidents and still require manual data entry and sketching.
 
-## 💡 Our Solution
+## The Solution
 
-MySettle streamlines the entire process digitally:
+MySettle is an end-to-end platform that allows citizens to lodge reports and allows Police IOs (Investigating Officers) to investigate remotely.
 
-1. **Digital Handshake** - Both drivers verify identity via QR code + MyDigital ID
-2. **Document Accident** - Capture photos, describe the incident, provide scene details
-3. **Submit to PDRM** - Digitally sign and submit report directly to Police
-4. **PDRM Review** - Police evaluates report within 24 hours
-5. **Receive Final Report** - Official police report sent to drivers & insurance
+- **The Digital Handshake**: Driver A scans Driver B's QR code to instantly verify identity and license details on both devices.
 
-### 🎥 Conflict Resolution
-If PDRM detects conflicting statements, a video call is scheduled for resolution — no need to visit the police station!
+- **Trusted Evidence**: Drivers take pictures and videos of the scene using MySettle. The app provides clear guidance on how to take evidence, removing the need for an investigator at the scene.
 
-## 🔐 Key Features
+- **Smart Data Collection**: The app auto-generates the "Rajah Kasar" (rough sketch) using Google Maps API, and auto-fills location (GPS) and weather data.
 
-- **MyDigital ID Integration** - Secure government-verified authentication
-- **MyGDX Verification** - Real-time driver & vehicle data validation
-- **QR Code Handshake** - Secure pairing between accident parties
-- **Photo Evidence** - Geotagged & timestamped accident photos
-- **Digital Signature** - Legally binding e-signatures
-- **Real-time Status Tracking** - Track report progress from submission to completion
+- **3-way Virtual Meeting**: In the case of a dispute, the police can arrange a conference meeting between the Police, Driver A, and Driver B.
 
-## 🚀 Getting Started
+## Impact
+
+*Saving Time, Saving Lives, No Panic*
+
+### Citizen
+
+| Benefit | Description |
+|---------|-------------|
+| **Convenience** | No need to panic when accident happens, just pull out mySettle. |
+| **Time Saving** | No need go and wait at police station for the report. |
+| **Safety** | Get off the road faster, keep safe and avoid traffic jam. |
+
+### Police IOs
+
+| Benefit | Description |
+|---------|-------------|
+| **Efficiency** | Digital data entry eliminates 30 minutes of typing per case. |
+
+### Nation
+
+| Benefit | Description |
+|---------|-------------|
+| **Data** | Accurate, geo-tagged accident data helps MIROS fix dangerous roads ("Blackspots"). |
+
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18+)

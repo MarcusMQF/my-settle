@@ -109,41 +109,38 @@ export default function ReviewSignPage() {
               Incident Details
             </Text>
             
-            <View style={{ flexDirection: "row", marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
-                <Calendar color="#1E3A8A" size={18} />
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
+                <Calendar color="#1E3A8A" size={22} />
               </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={{ marginLeft: 14, flex: 1 }}>
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>Date & Time</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937", marginTop: 2 }}>
-                  {new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })}
-                </Text>
-                <Text style={{ fontSize: 13, color: "#6B7280" }}>
-                  {new Date().toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
+                  {new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })}, {new Date().toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}
                 </Text>
               </View>
             </View>
 
-            <View style={{ flexDirection: "row", marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
-                <MapPin color="#1E3A8A" size={18} />
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
+                <MapPin color="#1E3A8A" size={22} />
               </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={{ marginLeft: 14, flex: 1 }}>
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>Location</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937", marginTop: 2 }}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
                   Jalan Tun Razak, Kuala Lumpur
                 </Text>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>3.1569° N, 101.7123° E</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 1 }}>3.1569° N, 101.7123° E</Text>
               </View>
             </View>
 
-            <View style={{ flexDirection: "row" }}>
-              <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#FEF3C7", alignItems: "center", justifyContent: "center" }}>
-                <Car color="#92400E" size={18} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: "#FEF3C7", alignItems: "center", justifyContent: "center" }}>
+                <Car color="#92400E" size={22} />
               </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={{ marginLeft: 14, flex: 1 }}>
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>Incident Type</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937", marginTop: 2 }}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
                   Rear-End Collision
                 </Text>
               </View>

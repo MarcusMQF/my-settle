@@ -3,7 +3,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import {
   FileText,
-  CheckCircle,
   AlertCircle,
   QrCode,
   Camera,
@@ -12,19 +11,17 @@ import {
   Video,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLoginStore } from "../../utils/auth/loginStore";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState("");
+  const { isLoggedIn: isAuthenticated, userName, setLoggedIn } = useLoginStore();
 
   const handleLogin = () => {
     // Simulate MyDigital ID login
     setTimeout(() => {
-      setIsAuthenticated(true);
-      setUserName("ALI BIN AHMAD");
+      setLoggedIn("ALI BIN AHMAD");
     }, 1000);
   };
 
@@ -146,7 +143,11 @@ export default function HomePage() {
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <CheckCircle color="#10B981" size={24} />
+                <Image
+                  source={require("../../../assets/images/verify.png")}
+                  style={{ width: 28, height: 28 }}
+                  resizeMode="contain"
+                />
                 <View style={{ marginLeft: 12, flex: 1 }}>
                   <Text
                     style={{

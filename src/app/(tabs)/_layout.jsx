@@ -1,7 +1,10 @@
 import { Tabs } from "expo-router";
 import { Home, FileText, Shield } from "lucide-react-native";
+import { useLoginStore } from "../../utils/auth/loginStore";
 
 export default function TabLayout() {
+  const { isLoggedIn } = useLoginStore();
+
   return (
     <Tabs
       screenOptions={{
@@ -9,14 +12,14 @@ export default function TabLayout() {
         animation: "none",
         sceneStyle: { backgroundColor: '#F9FAFB' },
         lazy: false,
-        tabBarStyle: {
+        tabBarStyle: isLoggedIn ? {
           backgroundColor: "#fff",
           borderTopWidth: 1,
           borderColor: "#E5E7EB",
           paddingTop: 6,
           paddingBottom: 16,
           height: 90,
-        },
+        } : { display: "none" },
         tabBarActiveTintColor: "#1E3A8A",
         tabBarInactiveTintColor: "#6B7280",
         tabBarLabelStyle: {
