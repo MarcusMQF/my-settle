@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/mysettle_icon.png" alt="MySettle Logo" width="300"/>
+  <img src="app/assets/images/mysettle_icon.png" alt="MySettle Logo" width="300"/>
 </p>
 
 <p align="center">
