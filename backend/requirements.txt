@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlmodel
+sse-starlette
+qrcode
+pillow
+requests
+python-dotenv
+
