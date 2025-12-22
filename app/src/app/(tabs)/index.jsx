@@ -46,6 +46,7 @@ export default function HomePage() {
           style={{
             flexDirection: "row",
             alignItems: "center",
+            justifyContent: "space-between",
             marginBottom: 8,
           }}
         >
@@ -54,8 +55,33 @@ export default function HomePage() {
             style={{ width: 250, height: 65, marginLeft: -38 }}
             resizeMode="contain"
           />
+          {/* Profile Icon - Only show when logged in */}
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 50,
+                backgroundColor: "#3B82F6",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 2,
+                borderColor: "#93C5FD",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 18,
+                  fontWeight: "700",
+                }}
+              >
+                M
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <Text style={{ fontSize: 14, color: "#93C5FD"}}>
+        <Text style={{ fontSize: 14, color: "#93C5FD" }}>
           Digital Accident Resolution Platform
         </Text>
       </View>

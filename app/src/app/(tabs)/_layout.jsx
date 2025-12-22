@@ -118,6 +118,14 @@ export default function TabLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
+      <Tabs.Screen
+        name="report-history"
+        options={{
+          href: null,
+          animation: "none",
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
   );
 }

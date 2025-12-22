@@ -1,17 +1,17 @@
 import { View, Text, ScrollView, TouchableOpacity, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { 
-  FileText, 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
-  Video, 
+import {
+  FileText,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Video,
   Calendar,
   X,
   Phone,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react-native";
 import { useState } from "react";
 
@@ -111,18 +111,20 @@ export default function ReportsPage() {
           paddingHorizontal: 20,
         }}
       >
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "700",
-            color: "#fff",
-          }}
-        >
-          My Reports
-        </Text>
-        <Text style={{ fontSize: 14, color: "#93C5FD", marginTop: 4 }}>
-          Track your accident reports & PDRM responses
-        </Text>
+        <View>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: "700",
+              color: "#fff",
+            }}
+          >
+            My Reports
+          </Text>
+          <Text style={{ fontSize: 14, color: "#93C5FD", marginTop: 4 }}>
+            Track your accident reports & PDRM responses
+          </Text>
+        </View>
       </View>
 
       <ScrollView

@@ -63,7 +63,7 @@ export default function CaptureEvidencePage() {
           }}
         >
           <Text style={{ fontSize: 24, fontWeight: "700", color: "#fff" }}>
-            Capture Evidence
+            Capture Evidences
           </Text>
         </View>
 
@@ -96,7 +96,7 @@ export default function CaptureEvidencePage() {
               textAlign: "center",
             }}
           >
-            We need camera access to capture accident evidence
+            We need camera access to capture accident evidences
           </Text>
           <TouchableOpacity
             onPress={requestPermission}

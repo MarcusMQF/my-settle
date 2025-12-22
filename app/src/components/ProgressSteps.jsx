@@ -5,7 +5,7 @@ export default function ProgressSteps({ currentStep, totalSteps = 6 }) {
   const steps = [
     { number: 1, label: "Scan QR" },
     { number: 2, label: "Verified" },
-    { number: 3, label: "Evidence" },
+    { number: 3, label: "Evidences" },
     { number: 4, label: "Details" },
     { number: 5, label: "Statement" },
     { number: 6, label: "Submit" },
