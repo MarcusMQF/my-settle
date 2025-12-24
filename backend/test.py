@@ -166,8 +166,8 @@ def run_tests():
     print(f"\n{Colors.BOLD}>>> STEP 5: Evidence Submission{Colors.END}")
 
     evidence_payload = [
-        {"type": "PHOTO", "content": "base64_photo"},
-        {"type": "TEXT", "content": "It was his fault"}
+        {"type": "PHOTO", "tag": "Car Front", "content": "base64_photo"},
+        {"type": "TEXT", "tag": "Other", "content": "It was his fault"}
     ]
 
     p_submit_a = {"session_id": session_id, "user_id": "driver_a", "evidences": evidence_payload}

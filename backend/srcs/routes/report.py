@@ -6,12 +6,15 @@ from pydantic import BaseModel
 from srcs.database import get_session
 from srcs.models.session import AccidentSession
 from srcs.models.report import AccidentReport, Evidence, EvidenceType
+from srcs.models.enums import SessionStatus, EvidenceTag
 from srcs.services.event_service import event_manager
 
 router = APIRouter(prefix="/report", tags=["Report"])
 
 class EvidenceItem(BaseModel):
     type: EvidenceType
+    tag: EvidenceTag
+    title: str | None = None
     content: str # Base64/URL
 
 class SubmitRequest(BaseModel):
@@ -32,10 +35,13 @@ async def submit_report(req: SubmitRequest, db: Session = Depends(get_session)):
     
     # 2. Add Evidence
     for item in req.evidences:
+        final_title = item.title if item.title else item.tag.value
         ev = Evidence(
             report_id=report.id,
             uploader_id=req.user_id,
             type=item.type,
+            tag=item.tag,
+            title=final_title,
             content=item.content
         )
         db.add(ev)
@@ -56,7 +62,7 @@ async def submit_report(req: SubmitRequest, db: Session = Depends(get_session)):
     state_update = "REPORT_SUBMITTED"
     
     if len(uploaders) >= 2: # Assuming A and B both submitted
-        session_obj.status = "PENDING_POLICE"
+        session_obj.status = SessionStatus.PENDING_POLICE
         state_update = "ALL_REPORTS_SUBMITTED"
     
     db.add(session_obj)

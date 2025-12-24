@@ -6,6 +6,7 @@ from sse_starlette.sse import EventSourceResponse
 from srcs.database import get_session
 from srcs.models.session import AccidentSession
 from srcs.models.report import AccidentReport
+from srcs.models.enums import SessionStatus
 from srcs.services.event_service import event_manager
 from srcs.services.qr_service import QRService
 
@@ -20,7 +21,7 @@ async def create_session(user_id: str, db: Session = Depends(get_session)):
         id=session_id,
         otp=otp,
         driver_a_id=user_id,
-        status="CREATED"
+        status=SessionStatus.CREATED
     )
     db.add(new_session)
     db.commit()
@@ -50,7 +51,7 @@ async def join_session(otp: str, user_id: str, db: Session = Depends(get_session
              raise HTTPException(status_code=400, detail="Session full")
     
     session_obj.driver_b_id = user_id
-    session_obj.status = "HANDSHAKE_COMPLETE"
+    session_obj.status = SessionStatus.HANDSHAKE
     db.add(session_obj)
     db.commit()
     
@@ -87,7 +88,7 @@ async def sign_session(session_id: str, user_id: str, signature: str, db: Sessio
     
     # Check Closure
     if report.police_signature and report.driver_a_signature and report.driver_b_signature:
-        session_obj.status = "CASE_CLOSED"
+        session_obj.status = SessionStatus.COMPLETED
         db.add(session_obj)
         db.commit()
         await event_manager.publish(session_id, "CASE_CLOSED", {"final_report": "http://pdf-url..."})

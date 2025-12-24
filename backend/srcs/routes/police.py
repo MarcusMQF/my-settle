@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from srcs.database import get_session
 from srcs.models.session import AccidentSession
 from srcs.models.report import AccidentReport
+from srcs.models.enums import SessionStatus
 from srcs.services.event_service import event_manager
 
 from srcs.services.pdf_service import PDFService
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/police", tags=["Police"])
 @router.get("/dashboard")
 def get_dashboard(db: Session = Depends(get_session)):
     # Return all sessions that are ready for police
-    stm = select(AccidentSession).where(AccidentSession.status == "PENDING_POLICE")
+    stm = select(AccidentSession).where(AccidentSession.status == SessionStatus.PENDING_POLICE)
     results = db.exec(stm).all()
     return results
 
@@ -32,7 +33,7 @@ async def start_meeting(session_id: str, police_id: str, db: Session = Depends(g
     link = f"https://meet.google.com/mock-{session_id[:8]}"
     session_obj.meet_link = link
     session_obj.police_id = police_id
-    session_obj.status = "MEETING_STARTED"
+    session_obj.status = SessionStatus.MEETING_STARTED
     
     db.add(session_obj)
     db.commit()
@@ -51,7 +52,7 @@ async def sign_report_police(session_id: str, police_id: str, signature: str, db
     db.add(report)
     
     session_obj = db.get(AccidentSession, session_id)
-    session_obj.status = "POLICE_SIGNED"
+    session_obj.status = SessionStatus.POLICE_SIGNED
     db.add(session_obj)
     
     db.commit()

@@ -3,6 +3,8 @@ from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
 from enum import Enum
 
+from srcs.models.enums import EvidenceTag
+
 class EvidenceType(str, Enum):
     PHOTO = "PHOTO"
     VIDEO = "VIDEO"
@@ -13,15 +15,47 @@ class Evidence(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     report_id: int | None = Field(default=None, foreign_key="accidentreport.id")
     uploader_id: str = Field(foreign_key="user.id")
+    title: str
     type: EvidenceType
-    content: str  # Base64 or URL
+    content: str  # Base64 or URL or raw text
     
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    # Link to draft
+    draft_id: int | None = Field(default=None, foreign_key="accidentreportdraft.id")
+    tag: EvidenceTag | None = None  # e.g. "Car Front", "Car Back"
+
+
+class AccidentReportDraft(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    session_id: str = Field(foreign_key="accidentsession.id")
+
+    # Android Input Fields
+    weather: str | None = None
+    accident_time: datetime | None = None
+    road_surface: str | None = None
+    road_type: str | None = None
+    location: str | None = None
+
+    # Statement
+    description: str | None = None  # What happened
+    at_fault_driver: str | None = None  # who was wrong
+    reason: str | None = None
+
+    # Incident Specific Missing Fields (Required for Polic Report)
+    incident_type: str | None = None  # jenis_kejadian e.g., "Maut", "Cedera", "Rosak"
+    light_condition: str | None = None  # Keadaan Cahaya e.g., Day, Night
+
 
 class AccidentReport(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     session_id: str = Field(foreign_key="accidentsession.id")
-    
+
+    # Source Draft IDs
+    driver_a_draft_id: int | None = Field(default=None, foreign_key="accidentreportdraft.id")
+    driver_b_draft_id: int | None = Field(default=None, foreign_key="accidentreportdraft.id")
+    report_details_id: int | None = Field(default=None, foreign_key="policereportdetails.id")
+
     # Signatures
     police_signature: str | None = None
     driver_a_signature: str | None = None
