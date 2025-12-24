@@ -67,7 +67,7 @@ class PDFService:
 
         # 1. Header
         # Reduced padding between lines
-        style_header_1 = ParagraphStyle(name='Header1', parent=styles['CenterTitle'], spaceAfter=2)
+        style_header_1 = ParagraphStyle(name='Header1', parent=styles['CenterTitle'], spaceAfter=0, leading=16)
         style_header_2 = ParagraphStyle(name='Header2', parent=styles['CenterTitle'], spaceAfter=4)
         
         elements.append(Paragraph("POLIS DIRAJA MALAYSIA", style_header_1))
@@ -85,10 +85,10 @@ class PDFService:
         # Columns widths (Total 6.5 inch)
         col1_w = 1.2*inch # Label
         col2_w = 0.2*inch # Separator
-        col3_w = 2.5*inch # Value
+        col3_w = 2.3*inch # Value
         col4_w = 1.3*inch # Label Right
         col5_w = 0.1*inch # Sep Right
-        col6_w = 1.2*inch # Value Right
+        col6_w = 1.4*inch # Value Right
         
         # Helper for wrapping text in Paragraphs to ensure multi-line alignment
         style_val = ParagraphStyle(name='ValueStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=11)
@@ -127,7 +127,7 @@ class PDFService:
         penerima_data = [
             ["Nama", ":", p(data.penerima_nama), "No. Badan", ":", p(data.penerima_id), "Pangkat", ":", p(data.penerima_pangkat)]
         ]
-        t_penerima = Table(penerima_data, colWidths=[0.5*inch, 0.2*inch, 2.0*inch, 0.8*inch, 0.2*inch, 1.0*inch, 0.6*inch, 0.2*inch, 1.0*inch])
+        t_penerima = Table(penerima_data, colWidths=[0.95*inch, 0.1*inch, 1.3*inch, 0.95*inch, 0.1*inch, 1.15*inch, 0.9*inch, 0.1*inch, 0.95*inch])
         t_penerima.setStyle(TableStyle([
             ('FONTSIZE', (0,0), (-1,-1), 9), 
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -143,7 +143,7 @@ class PDFService:
             ["No. Pasport", ":", p(data.jurubahasa_pasport or "---"), "Bahasa Asal", ":", p(data.jurubahasa_bahasa_asal or "---"), "", "", ""],
             ["Alamat", ":", p(data.jurubahasa_alamat or "---"), "", "", "", "", "", ""]
         ]
-        t_jurubahasa = Table(jurubahasa_data, colWidths=[0.8*inch, 0.1*inch, 1.8*inch, 0.9*inch, 0.1*inch, 1.0*inch, 1.1*inch, 0.1*inch, 0.6*inch])
+        t_jurubahasa = Table(jurubahasa_data, colWidths=[0.95*inch, 0.1*inch, 1.3*inch, 0.95*inch, 0.1*inch, 1.15*inch, 0.9*inch, 0.1*inch, 0.95*inch])
         t_jurubahasa.setStyle(TableStyle([
             ('FONTSIZE', (0,0), (-1,-1), 9), 
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -155,7 +155,7 @@ class PDFService:
         # 5. Butir-butir Pengadu (The big one)
         elements.append(Paragraph("Butir-butir Pengadu :", style_bold_small))
 
-        col_w_pengadu = [0.95*inch, 0.1*inch, 1.7*inch, 0.95*inch, 0.1*inch, 0.85*inch, 0.9*inch, 0.1*inch, 0.85*inch]
+        col_w_pengadu = [0.95*inch, 0.1*inch, 1.3*inch, 0.95*inch, 0.1*inch, 1.15*inch, 0.9*inch, 0.1*inch, 0.95*inch]
         
         dob = data.pengadu_tarikh_lahir.strftime("%d/%m/%Y") if data.pengadu_tarikh_lahir else "---"
         
@@ -182,6 +182,7 @@ class PDFService:
             ('SPAN', (2,7), (-1,7)), # Pejabat
             ('SPAN', (2,4), (-1,4)), # Pekerjaan
             ('SPAN', (2,0), (-1,0)), # Nama
+            ('SPAN', (2,9), (-1,9)), # Emel
         ]))
         elements.append(t_pengadu)
         elements.append(Spacer(1, 0.2*inch))
@@ -191,7 +192,7 @@ class PDFService:
         elements.append(Spacer(1, 0.1*inch))
         # Upper case body text
         elements.append(Paragraph(data.keterangan_kes.upper(), ParagraphStyle('BodyUpper', parent=styles['Normal'], fontSize=9, leading=11)))
-        elements.append(Spacer(1, 0.55*inch))
+        elements.append(Spacer(1, 1*inch))
         
         # 7. Signatures
         # 6.5 inch total width

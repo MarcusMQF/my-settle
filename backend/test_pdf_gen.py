@@ -21,7 +21,7 @@ def test_generate_pdfs():
         tahun="2024",
         penerima_nama="Kpl 12345 Ali",
         penerima_id="12345",
-        penerima_pangkat="Kpl",
+        penerima_pangkat="KPL/L",
         
         jurubahasa_nama="Ali bin Abu",
         jurubahasa_ic="901010-10-1010",
@@ -68,7 +68,7 @@ def test_generate_pdfs():
         pengadu_polis_tentera="RF99999",
         pengadu_pasport="K12345678",
         pengadu_sijil_beranak="SB987654321",
-        pengadu_email="ahmad@example.com",
+        pengadu_email="ahmadbinabu123@example.com",
         pengadu_alamat="123 Jalan Test, KL",
         pengadu_pekerjaan="Pemandu Grab",
 
