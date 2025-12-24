@@ -6,4 +6,4 @@ qrcode
 pillow
 requests
 python-dotenv
-
+reportlab
