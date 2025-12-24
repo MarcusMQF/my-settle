@@ -23,6 +23,13 @@ def get_dashboard(db: Session = Depends(get_session)):
     results = db.exec(stm).all()
     return results
 
+@router.get("/reports/{session_id}/details", response_model=PoliceReportDetails)
+def get_report_details(session_id: str, db: Session = Depends(get_session)):
+    details = db.exec(select(PoliceReportDetails).where(PoliceReportDetails.session_id == session_id)).first()
+    if not details:
+        raise HTTPException(404, "Report details not found")
+    return details
+
 @router.post("/meeting")
 async def start_meeting(session_id: str, police_id: str, db: Session = Depends(get_session)):
     session_obj = db.get(AccidentSession, session_id)

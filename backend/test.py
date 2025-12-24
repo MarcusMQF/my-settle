@@ -9,6 +9,14 @@ from test_client import TestClient
 BASE_URL = f"http://localhost:{PORT}"
 client = TestClient(BASE_URL)
 
+# Thread-safe printing
+print_lock = threading.Lock()
+_orig_print = print
+
+def print(*args, **kwargs):
+    with print_lock:
+        _orig_print(*args, **kwargs)
+
 
 # ANSI color codes for better readability
 class Colors:
@@ -39,17 +47,12 @@ def log_action(thread, method, direction, description, status, payload=None):
 
     if payload:
         if isinstance(payload, dict):
-            # Show summarized payload for dicts
+            # Show summarized payload for dicts, but do NOT truncate for now
             safe_payload = payload.copy()
             for k, v in safe_payload.items():
-                # Truncate long strings
-                if isinstance(v, str) and len(v) > 50:
-                    safe_payload[k] = v[:47] + "..."
-                # Summary for list/dict
-                elif isinstance(v, list):
-                    safe_payload[k] = f"[{len(v)} items]"
-                elif isinstance(v, dict):
-                     safe_payload[k] = "{...}"
+                # No Truncation
+                pass
+                
             payload_str = f" {Colors.BOLD}[{json.dumps(safe_payload)}]{Colors.END}"
         else:
             payload_str = f" {Colors.BOLD}[{payload}]{Colors.END}"
@@ -162,26 +165,51 @@ def run_tests():
     log_action("Main", "POST", "RECEIVE", "Image verified", "OK",
                {"valid": verify_res.get('valid'), "car_plate": verify_res.get('car_plate')})
 
-    # ========== STEP 5: Evidence Submission ==========
-    print(f"\n{Colors.BOLD}>>> STEP 5: Evidence Submission{Colors.END}")
+    # ========== STEP 5: Evidence & Draft Submission ==========
+    print(f"\n{Colors.BOLD}>>> STEP 5: Evidence & Draft Submission{Colors.END}")
 
     evidence_payload = [
         {"type": "PHOTO", "tag": "Car Front", "content": "base64_photo"},
         {"type": "TEXT", "tag": "Other", "content": "It was his fault"}
     ]
+    
+    draft_payload = {
+        "accident_time": "2024-12-25T14:30:00",
+        "weather": "Sunny",
+        "road_surface": "Dry",
+        "location": "Jalan Tun Razak",
+        "description": "I was hit from behind.",
+        "incident_type": "NON_INJURY"
+    }
 
-    p_submit_a = {"session_id": session_id, "user_id": "driver_a", "evidences": evidence_payload}
-    log_action("Driver A", "POST", "SEND", "/report/submit with 2 evidences", "PENDING", p_submit_a)
-    submit_a = client.post("/report/submit",
-                           json=p_submit_a)
+    p_submit_a = {
+        "session_id": session_id, 
+        "user_id": "driver_a", 
+        "evidences": evidence_payload,
+        "draft": draft_payload
+    }
+    log_action("Driver A", "POST", "SEND", "/report/submit with Draft + Evidence", "PENDING", p_submit_a)
+    submit_a = client.post("/report/submit", json=p_submit_a)
     log_action("Driver A", "POST", "RECEIVE", "Report submitted", "SUCCESS", {"status": submit_a.get('status')})
+    
+    if submit_a.get('status') != "WAITING_FOR_PARTNER":
+        log_action("Driver A", "ASSERT", "CHECK", "Status should be WAITING_FOR_PARTNER", "FAILED")
+    
     time.sleep(0.5)
 
-    p_submit_b = {"session_id": session_id, "user_id": "driver_b", "evidences": evidence_payload}
-    log_action("Driver B", "POST", "SEND", "/report/submit with 2 evidences", "PENDING", p_submit_b)
-    submit_b = client.post("/report/submit",
-                           json=p_submit_b)
+    p_submit_b = {
+        "session_id": session_id, 
+        "user_id": "driver_b", 
+        "evidences": evidence_payload,
+        "draft": draft_payload
+    }
+    log_action("Driver B", "POST", "SEND", "/report/submit with Draft + Evidence", "PENDING", p_submit_b)
+    submit_b = client.post("/report/submit", json=p_submit_b)
     log_action("Driver B", "POST", "RECEIVE", "Report submitted", "SUCCESS", {"status": submit_b.get('status')})
+    
+    if submit_b.get('status') != "SUBMITTED":
+        log_action("Driver B", "ASSERT", "CHECK", "Status should be SUBMITTED", "FAILED")
+        
     time.sleep(1)
 
     # ========== STEP 6: Police Meeting ==========
@@ -193,8 +221,24 @@ def run_tests():
     log_action("Police", "POST", "RECEIVE", "Meeting created", "SUCCESS", {"link": meeting_res.get('link')})
     time.sleep(1)
 
-    # ========== STEP 7: Police Signature ==========
-    print(f"\n{Colors.BOLD}>>> STEP 7: Police Signature{Colors.END}")
+    # ========== STEP 7: Police Verification ==========
+    print(f"\n{Colors.BOLD}>>> STEP 7: Police Verification{Colors.END}")
+
+    # 1. Police checks Details
+    log_action("Police", "GET", "SEND", f"/police/reports/{session_id}/details", "PENDING")
+    details_res = client.get(f"/police/reports/{session_id}/details")
+    
+    # Log key details
+    log_action("Police", "GET", "RECEIVE", "Got Report Details", "SUCCESS", details_res)
+    
+    # 2. Driver Checks Report Meta
+    log_action("Driver A", "GET", "SEND", f"/session/report/{session_id}/meta", "PENDING")
+    meta_res = client.get(f"/session/report/{session_id}/meta")
+    log_action("Driver A", "GET", "RECEIVE", "Got Report Meta", "SUCCESS", 
+               {"polis_repot_url": meta_res.get('polis_repot_url'), "police_signature": meta_res.get('police_signature')})
+
+    # ========== STEP 8: Police Signature ==========
+    print(f"\n{Colors.BOLD}>>> STEP 8: Police Signature{Colors.END}")
 
     p_sign_police = {"session_id": session_id, "police_id": "police_main", "signature": "police_sig"}
     log_action("Police", "POST", "SEND", "/police/sign", "PENDING", p_sign_police)
@@ -203,8 +247,8 @@ def run_tests():
     log_action("Police", "POST", "RECEIVE", "Police signed report", "SUCCESS", {"status": police_sign.get('status')})
     time.sleep(1)
 
-    # ========== STEP 8: User Signatures ==========
-    print(f"\n{Colors.BOLD}>>> STEP 8: User Signatures (Case Closure){Colors.END}")
+    # ========== STEP 9: User Signatures ==========
+    print(f"\n{Colors.BOLD}>>> STEP 9: User Signatures (Case Closure){Colors.END}")
 
     p_sign_a = {"session_id": session_id, "user_id": "driver_a", "signature": "a_sig"}
     log_action("Driver A", "POST", "SEND", "/session/sign", "PENDING", p_sign_a)
@@ -219,6 +263,9 @@ def run_tests():
     log_action("Driver B", "POST", "RECEIVE", "Driver B signed", "SUCCESS", {"status": sign_b.get('status')})
     time.sleep(2)
 
+    # Wait for CASE_CLOSED
+    time.sleep(3)
+    
     print(f"\n{Colors.BOLD}{'=' * 80}{Colors.END}")
     print(f"{Colors.GREEN}{Colors.BOLD}✓ Test flow completed successfully{Colors.END}")
     print(f"{Colors.BOLD}{'=' * 80}{Colors.END}\n")

@@ -1,14 +1,17 @@
 import uuid
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from sse_starlette.sse import EventSourceResponse
 
 from srcs.database import get_session
 from srcs.models.session import AccidentSession
-from srcs.models.report import AccidentReport
+from srcs.models.report import AccidentReport, PoliceReportDetails
 from srcs.models.enums import SessionStatus
 from srcs.services.event_service import event_manager
 from srcs.services.qr_service import QRService
+from srcs.services.pdf_service import PDFService
+from srcs.config import HOST, PORT
 
 router = APIRouter(prefix="/session", tags=["Session"])
 
@@ -59,9 +62,52 @@ async def join_session(otp: str, user_id: str, db: Session = Depends(get_session
     await event_manager.publish(session_obj.id, "HANDSHAKE_COMPLETE", {"driver_b": user_id})
     return {"session_id": session_obj.id, "status": "JOINED"}
 
+@router.post("/reconnect")
+async def reconnect_session(otp: str, user_id: str, db: Session = Depends(get_session)):
+    statement = select(AccidentSession).where(AccidentSession.otp == otp)
+    session_obj = db.exec(statement).first()
+
+    if not session_obj:
+        raise HTTPException(status_code=404, detail="Invalid OTP")
+
+    # Determine Role
+    role = None
+    partner_id = None
+    if session_obj.driver_a_id == user_id:
+        role = "DRIVER_A"
+        partner_id = session_obj.driver_b_id
+    elif session_obj.driver_b_id == user_id:
+        role = "DRIVER_B"
+        partner_id = session_obj.driver_a_id
+    else:
+        raise HTTPException(status_code=403, detail="User not part of this session")
+
+    # Check Draft Status
+    has_submitted = False
+    if role == "DRIVER_A" and session_obj.driver_a_draft_id:
+        has_submitted = True
+    elif role == "DRIVER_B" and session_obj.driver_b_draft_id:
+        has_submitted = True
+
+    return {
+        "session_id": session_obj.id,
+        "status": session_obj.status,
+        "role": role,
+        "partner_id": partner_id,
+        "has_submitted_draft": has_submitted
+    }
+
 @router.get("/stream/{session_id}")
 async def message_stream(request: Request, session_id: str):
     return EventSourceResponse(event_manager.subscribe(session_id))
+
+@router.get("/report/{session_id}/meta")
+def get_report_meta(session_id: str, db: Session = Depends(get_session)):
+    statement = select(AccidentReport).where(AccidentReport.session_id == session_id)
+    report = db.exec(statement).first()
+    if not report:
+        raise HTTPException(404, "Report not found")
+    return report
 
 @router.post("/sign")
 async def sign_session(session_id: str, user_id: str, signature: str, db: Session = Depends(get_session)):
@@ -90,8 +136,38 @@ async def sign_session(session_id: str, user_id: str, signature: str, db: Sessio
     if report.police_signature and report.driver_a_signature and report.driver_b_signature:
         session_obj.status = SessionStatus.COMPLETED
         db.add(session_obj)
+        
+        # Generate PDFs
+        pdf_service = PDFService()
+        if report.report_details_id:
+            details = db.get(PoliceReportDetails, report.report_details_id)
+            if details:
+                # 1. Polis Repot
+                f_polis = pdf_service.generate_polis_repot(details)
+                url_polis = f"/reports/{os.path.basename(f_polis)}"
+                report.polis_repot_url = url_polis
+                
+                # 2. Rajah Kasar
+                # Note: We need a sketch path if available, for now passing None or logic to find it
+                # Logic: Fetch sketch evidence? For demo we can skip image or try to find it
+                # For now just generate the PDF wrapper
+                f_rajah = pdf_service.generate_rajah_kasar(details, sketch_path=None) 
+                url_rajah = f"/reports/{os.path.basename(f_rajah)}"
+                report.rajah_kasar_url = url_rajah
+                
+                # 3. Keputusan
+                f_keputusan = pdf_service.generate_keputusan(details)
+                url_keputusan = f"/reports/{os.path.basename(f_keputusan)}"
+                report.keputusan_url = url_keputusan
+
+        db.add(report)
         db.commit()
-        await event_manager.publish(session_id, "CASE_CLOSED", {"final_report": "http://pdf-url..."})
+        
+        await event_manager.publish(session_id, "CASE_CLOSED", {
+            "polis_repot": report.polis_repot_url,
+            "rajah_kasar": report.rajah_kasar_url,
+            "keputusan": report.keputusan_url
+        })
     else:
         # Notify that someone signed
         await event_manager.publish(session_id, "USER_SIGNED", {"user_id": user_id})

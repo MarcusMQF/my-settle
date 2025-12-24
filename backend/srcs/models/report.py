@@ -61,6 +61,11 @@ class AccidentReport(SQLModel, table=True):
     driver_a_signature: str | None = None
     driver_b_signature: str | None = None
     
+    # Generated Report URLs
+    polis_repot_url: str | None = None
+    rajah_kasar_url: str | None = None
+    keputusan_url: str | None = None
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class PoliceReportDetails(SQLModel, table=True):
