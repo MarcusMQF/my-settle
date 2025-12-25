@@ -202,11 +202,11 @@ class PDFService:
         
         sig_pengadu_display = "_"*25
         if signed_by_pengadu:
-            sig_pengadu_display = f"{signed_by_pengadu.upper()}\n\"(digital signature)\""
+            sig_pengadu_display = f"{signed_by_pengadu.upper()}<br/>(digital signature)"
             
         sig_police_display = "_"*25
         if signed_by_police:
-             sig_police_display = f"{signed_by_police.upper()}\n\"(digital signature)\""
+             sig_police_display = f"{signed_by_police.upper()}<br/>(digital signature)"
         
         sig_data = [
             ["Tandatangan Pengadu:", "Tandatangan Jurubahasa\n(Jika ada):", "Tandatangan Penerima Repot:"],
