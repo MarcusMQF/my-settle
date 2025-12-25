@@ -98,7 +98,7 @@ async def submit_report(req: SubmitRequest, db: Session = Depends(get_session)):
         )
         db.add(ev)
     db.commit()
-    
+
     # 4. Check if we should generate the Final Report
     db.refresh(session_obj)
     

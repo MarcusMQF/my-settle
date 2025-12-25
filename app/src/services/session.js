@@ -13,6 +13,15 @@ export const sessionService = {
         return api.post(`/session/reconnect?otp=${otp}&user_id=${userId}`, {});
     },
 
+    submitReport: async (sessionId, userId, draft, evidences) => {
+        return api.post('/report/submit', {
+            session_id: sessionId,
+            user_id: userId,
+            draft: draft,
+            evidences: evidences
+        });
+    },
+
     getStreamUrl: (sessionId) => {
         return `${BASE_URL}/session/stream/${sessionId}`;
     }

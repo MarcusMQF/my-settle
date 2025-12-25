@@ -7,21 +7,23 @@ import { useState, useRef } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import ProgressSteps from "../../../components/ProgressSteps";
 
+import { useSessionStore } from "../../../utils/session/store";
+
 export default function CaptureEvidencePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showCamera, setShowCamera] = useState(false);
-  const [capturedPhotos, setCapturedPhotos] = useState([]);
   const [viewPhotoUri, setViewPhotoUri] = useState(null);
   const cameraRef = useRef(null);
+  const { addEvidence, evidences } = useSessionStore();
 
   const photoGuides = [
     { label: "Car Front", description: "Front view of the vehicle" },
     { label: "Car Back", description: "Rear view of the vehicle" },
-    { label: "Left Side", description: "Left side of the vehicle" },
-    { label: "Right Side", description: "Right side of the vehicle" },
+    { label: "Car Left", description: "Left side of the vehicle" },
+    { label: "Car Right", description: "Right side of the vehicle" },
     { label: "Damage Part", description: "Close-up of damaged area" },
   ];
 
@@ -33,8 +35,17 @@ export default function CaptureEvidencePage() {
 
   const handleTakePhoto = async () => {
     if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      setCapturedPhotos([...capturedPhotos, photo.uri]);
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.5 });
+
+      const evidence = {
+        type: "PHOTO",
+        tag: photoGuides[currentPhotoIndex].label,
+        title: photoGuides[currentPhotoIndex].description,
+        content: photo.base64, // API expects base64 string
+        uri: photo.uri // Keep URI for local display
+      };
+
+      addEvidence(evidence);
       setShowCamera(false);
       setCurrentPhotoIndex(currentPhotoIndex + 1);
     }
@@ -44,7 +55,8 @@ export default function CaptureEvidencePage() {
     router.push("/new-report/scene-details");
   };
 
-  const allPhotosCaptured = capturedPhotos.length === 5;
+  const capturedPhotosCount = evidences.filter(e => e.type === 'PHOTO').length;
+  const allPhotosCaptured = capturedPhotosCount >= 5;
 
   if (!permission) {
     return <View />;
@@ -187,77 +199,82 @@ export default function CaptureEvidencePage() {
               marginBottom: 16,
             }}
           >
-            Photo Checklist ({capturedPhotos.length}/5)
+            Photo Checklist ({capturedPhotosCount}/5)
           </Text>
 
-          {photoGuides.map((guide, index) => (
-            <View
-              key={index}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                paddingVertical: 12,
-                borderBottomWidth: index < 4 ? 1 : 0,
-                borderBottomColor: "#E5E7EB",
-              }}
-            >
+          {photoGuides.map((guide, index) => {
+            const photo = evidences.find(e => e.type === 'PHOTO' && e.tag === guide.label);
+            const isCaptured = !!photo;
+
+            return (
               <View
+                key={index}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor:
-                    capturedPhotos.length > index
-                      ? "#10B981"
-                      : currentPhotoIndex === index
-                        ? "#F97316"
-                        : "#E5E7EB",
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
+                  paddingVertical: 12,
+                  borderBottomWidth: index < 4 ? 1 : 0,
+                  borderBottomColor: "#E5E7EB",
                 }}
               >
-                {capturedPhotos.length > index ? (
-                  <CheckCircle color="#fff" size={20} />
-                ) : (
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor:
+                      isCaptured
+                        ? "#10B981"
+                        : currentPhotoIndex === index
+                          ? "#F97316"
+                          : "#E5E7EB",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
+                  {isCaptured ? (
+                    <CheckCircle color="#fff" size={20} />
+                  ) : (
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "700",
+                        color: currentPhotoIndex === index ? "#fff" : "#9CA3AF",
+                      }}
+                    >
+                      {index + 1}
+                    </Text>
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "700",
-                      color: currentPhotoIndex === index ? "#fff" : "#9CA3AF",
-                    }}
+                    style={{ fontSize: 14, fontWeight: "600", color: "#1F2937" }}
                   >
-                    {index + 1}
+                    {guide.label}
                   </Text>
+                  <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+                    {guide.description}
+                  </Text>
+                </View>
+                {isCaptured && photo.uri && (
+                  <TouchableOpacity onPress={() => setViewPhotoUri(photo.uri)}>
+                    <Image
+                      source={{ uri: photo.uri }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 8,
+                        marginLeft: 12,
+                        borderWidth: 1,
+                        borderColor: "#E5E7EB",
+                      }}
+                    />
+                  </TouchableOpacity>
                 )}
               </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{ fontSize: 14, fontWeight: "600", color: "#1F2937" }}
-                >
-                  {guide.label}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
-                  {guide.description}
-                </Text>
-              </View>
-              {capturedPhotos[index] && (
-                <TouchableOpacity onPress={() => setViewPhotoUri(capturedPhotos[index])}>
-                  <Image
-                    source={{ uri: capturedPhotos[index] }}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 8,
-                      marginLeft: 12,
-                      borderWidth: 1,
-                      borderColor: "#E5E7EB",
-                    }}
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
+            )
+          })}
         </View>
 
         {!allPhotosCaptured && currentPhotoIndex < photoGuides.length && (
@@ -429,4 +446,3 @@ export default function CaptureEvidencePage() {
     </View>
   );
 }
-

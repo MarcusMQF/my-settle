@@ -1,34 +1,55 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, Image, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { FileText, Fingerprint, MapPin, Calendar, Clock, Car, User, Camera, CheckCircle, Shield } from "lucide-react-native";
+import { FileText, Fingerprint, MapPin, Calendar, Car, User, Camera, CheckCircle, Shield } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import ProgressSteps from "../../../components/ProgressSteps";
+
+import { useSessionStore } from "../../../utils/session/store";
+import { useAuth } from "../../../utils/auth/useAuth";
+import { sessionService } from "../../../services/session";
 
 export default function ReviewSignPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showBiometric, setShowBiometric] = useState(false);
+  const { sessionId, draft, evidences, partner } = useSessionStore();
+  const { auth } = useAuth();
+  const user = auth?.user;
 
-  // Mock photo data - in real app would come from state/context
-  const capturedPhotos = [
-    { id: 1, label: "Front View", uri: "https://via.placeholder.com/150/1E3A8A/FFFFFF?text=Front" },
-    { id: 2, label: "Rear View", uri: "https://via.placeholder.com/150/1E3A8A/FFFFFF?text=Rear" },
-    { id: 3, label: "Left Side", uri: "https://via.placeholder.com/150/1E3A8A/FFFFFF?text=Left" },
-    { id: 4, label: "Right Side", uri: "https://via.placeholder.com/150/1E3A8A/FFFFFF?text=Right" },
-    { id: 5, label: "Damage", uri: "https://via.placeholder.com/150/1E3A8A/FFFFFF?text=Damage" },
-  ];
+  // Filter photo evidences
+  const capturedPhotos = evidences.filter(e => e.type === 'PHOTO');
 
-  const handleSign = () => {
+  const handleSign = async () => {
     setShowBiometric(true);
-    setTimeout(() => {
+
+    try {
+      // Sanitize evidences (remove URI, ensure valid structure)
+      const sanitizedEvidences = evidences.map(({ uri, ...rest }) => rest);
+
+      // The API call
+      await sessionService.submitReport(
+        sessionId || 'MOCK_SESSION', // Fallback for testing if lost
+        user?.id || 'TEST_USER',
+        draft,
+        sanitizedEvidences
+      );
+
+      setTimeout(() => {
+        setShowBiometric(false);
+        router.replace("/new-report/success");
+      }, 1500);
+
+    } catch (error) {
+      console.error("Submission failed", error);
       setShowBiometric(false);
-      router.replace("/new-report/success");
-    }, 2500);
+      Alert.alert("Submission Failed", "There was an error submitting your report. Please try again.");
+    }
   };
 
   const referenceNumber = `MS-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+  const dateObj = new Date(draft.accident_time || Date.now());
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
@@ -108,7 +129,7 @@ export default function ReviewSignPage() {
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#1E3A8A", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
               Incident Details
             </Text>
-            
+
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
               <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
                 <Calendar color="#1E3A8A" size={22} />
@@ -116,7 +137,7 @@ export default function ReviewSignPage() {
               <View style={{ marginLeft: 14, flex: 1 }}>
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>Date & Time</Text>
                 <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
-                  {new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })}, {new Date().toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}
+                  {dateObj.toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })}, {dateObj.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}
                 </Text>
               </View>
             </View>
@@ -128,9 +149,9 @@ export default function ReviewSignPage() {
               <View style={{ marginLeft: 14, flex: 1 }}>
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>Location</Text>
                 <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
-                  Jalan Tun Razak, Kuala Lumpur
+                  {draft.location || "N/A"}
                 </Text>
-                <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 1 }}>3.1569° N, 101.7123° E</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 1 }}>{draft.road_surface} • {draft.road_type} • {draft.weather}</Text>
               </View>
             </View>
 
@@ -139,9 +160,9 @@ export default function ReviewSignPage() {
                 <Car color="#92400E" size={22} />
               </View>
               <View style={{ marginLeft: 14, flex: 1 }}>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>Incident Type</Text>
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }}>
-                  Rear-End Collision
+                <Text style={{ fontSize: 12, color: "#6B7280" }}>Statement</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937", marginTop: 2 }} numberOfLines={3}>
+                  {draft.description || "N/A"}
                 </Text>
               </View>
             </View>
@@ -164,7 +185,7 @@ export default function ReviewSignPage() {
                 </View>
                 <View style={{ marginLeft: 10 }}>
                   <Text style={{ fontSize: 11, color: "#059669", fontWeight: "600" }}>PARTY A (YOU)</Text>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937" }}>ALI BIN AHMAD</Text>
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937" }}>{user?.name || "Unknown"}</Text>
                 </View>
                 <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", backgroundColor: "#D1FAE5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
                   <CheckCircle color="#10B981" size={12} />
@@ -172,8 +193,8 @@ export default function ReviewSignPage() {
                 </View>
               </View>
               <View style={{ marginLeft: 42 }}>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>NRIC: 050101-01-5555</Text>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>Vehicle: WAA 1234 A (Toyota Vios 2022)</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280" }}>NRIC: {user?.ic_no || "N/A"}</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280" }}>Vehicle: {user?.car_plate || "N/A"} ({user?.car_model})</Text>
               </View>
             </View>
 
@@ -185,16 +206,18 @@ export default function ReviewSignPage() {
                 </View>
                 <View style={{ marginLeft: 10 }}>
                   <Text style={{ fontSize: 11, color: "#2563EB", fontWeight: "600" }}>PARTY B (OTHER DRIVER)</Text>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937" }}>MOHD RIZAL BIN ISMAIL</Text>
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F2937" }}>{partner?.name || "Unknown Driver (Waiting)"}</Text>
                 </View>
                 <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", backgroundColor: "#DBEAFE", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
                   <CheckCircle color="#3B82F6" size={12} />
-                  <Text style={{ fontSize: 10, color: "#2563EB", fontWeight: "600", marginLeft: 4 }}>VERIFIED</Text>
+                  <Text style={{ fontSize: 10, color: "#2563EB", fontWeight: "600", marginLeft: 4 }}>
+                    {partner ? "VERIFIED" : "WAITING"}
+                  </Text>
                 </View>
               </View>
               <View style={{ marginLeft: 42 }}>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>NRIC: 920505-14-5678</Text>
-                <Text style={{ fontSize: 12, color: "#6B7280" }}>Vehicle: WBB 5678 C (Honda City 2023)</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280" }}>NRIC: {partner?.ic_no || "N/A"}</Text>
+                <Text style={{ fontSize: 12, color: "#6B7280" }}>Vehicle: {partner?.car_plate || "N/A"} ({partner?.car_model})</Text>
               </View>
             </View>
           </View>
@@ -215,7 +238,7 @@ export default function ReviewSignPage() {
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
               {capturedPhotos.map((photo, index) => (
-                <View key={photo.id} style={{ marginHorizontal: 4 }}>
+                <View key={index} style={{ marginHorizontal: 4 }}>
                   <View
                     style={{
                       width: 100,
@@ -227,12 +250,16 @@ export default function ReviewSignPage() {
                       borderColor: "#D1D5DB",
                     }}
                   >
-                    <View style={{ flex: 1, backgroundColor: "#1E3A8A", alignItems: "center", justifyContent: "center" }}>
-                      <Camera color="#fff" size={28} />
-                      <Text style={{ color: "#93C5FD", fontSize: 10, marginTop: 4 }}>Photo {index + 1}</Text>
-                    </View>
+                    {photo.uri ? (
+                      <Image source={{ uri: photo.uri }} style={{ width: '100%', height: '100%' }} />
+                    ) : (
+                      <View style={{ flex: 1, backgroundColor: "#1E3A8A", alignItems: "center", justifyContent: "center" }}>
+                        <Camera color="#fff" size={28} />
+                        <Text style={{ color: "#93C5FD", fontSize: 10, marginTop: 4 }}>{photo.tag}</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={{ fontSize: 10, color: "#6B7280", textAlign: "center", marginTop: 4 }}>{photo.label}</Text>
+                  <Text style={{ fontSize: 10, color: "#6B7280", textAlign: "center", marginTop: 4 }}>{photo.tag}</Text>
                 </View>
               ))}
             </ScrollView>

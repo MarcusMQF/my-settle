@@ -77,15 +77,19 @@ Reconnect: POST /session/reconnect - Rejoin an active session to restore state.
 Event Stream: GET /session/stream/{session_id} - SSE stream for real-time updates (handshake, submission events, etc.).
 Stage 2: Data Collection & Submission
 Submit Report Draft: POST /report/submit - Submit accident details and evidence (photos, videos, sketches).
+
 Stage 3: Police Review (Web Dashboard)
 Police Dashboard: GET /police/dashboard - List all sessions requiring attention.
 Get Session Details: GET /police/reports/{session_id}/details - Comprehensive accident details for the police view.
 Get Report Meta: GET /session/report/{session_id}/meta - Check status of signatures and generated PDFs.
+
 Stage 4: Virtual Meeting
 Start Meeting: POST /police/meeting - Generate a Google Meet link and notify drivers.
+
 Stage 5: Report Generation & Police Signature
 Generate/Update Report: POST /police/reports/generate - Update decision fields and regenerate PDF artifacts.
 Police Sign Report: POST /police/sign - Submit police officer's signature.
+
 Stage 6: Case Closure
 Driver Sign Report: POST /session/sign - Driver signs the finalized report to close the case.
 Utility / Helper Tools

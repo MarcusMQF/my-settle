@@ -13,28 +13,51 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import ProgressSteps from "../../../components/ProgressSteps";
 
+import { useSessionStore } from "../../../utils/session/store";
+
 export default function SceneDetailsPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { draft, updateDraft } = useSessionStore();
 
-  const [weather, setWeather] = useState("");
-  const [roadSurface, setRoadSurface] = useState("");
-  const [location, setLocation] = useState("");
-  const [roadType, setRoadType] = useState("");
-  const today = new Date();
-  const [accidentDay, setAccidentDay] = useState(String(today.getDate()).padStart(2, "0"));
-  const [accidentMonth, setAccidentMonth] = useState(String(today.getMonth() + 1).padStart(2, "0"));
-  const [accidentYear, setAccidentYear] = useState(String(today.getFullYear()));
-  const [accidentHour, setAccidentHour] = useState("");
-  const [accidentMinute, setAccidentMinute] = useState("");
-  const [accidentPeriod, setAccidentPeriod] = useState("AM");
+  const parseDate = (isoString) => {
+    const d = new Date(isoString);
+    return {
+      day: String(d.getDate()).padStart(2, '0'),
+      month: String(d.getMonth() + 1).padStart(2, '0'),
+      year: String(d.getFullYear()),
+      hour: d.getHours() % 12 || 12,
+      minute: String(d.getMinutes()).padStart(2, '0'),
+      period: d.getHours() >= 12 ? 'PM' : 'AM'
+    };
+  };
+
+  const initialDate = parseDate(draft.accident_time || new Date().toISOString());
+
+  const [weather, setWeather] = useState(draft.weather || "");
+  const [roadSurface, setRoadSurface] = useState(draft.road_surface || "");
+  const [location, setLocation] = useState(draft.location || "");
+  const [roadType, setRoadType] = useState(draft.road_type || "");
+  const [incidentType, setIncidentType] = useState(draft.incident_type || "");
+  const [lightCondition, setLightCondition] = useState(draft.light_condition || "");
+
+  const [accidentDay, setAccidentDay] = useState(initialDate.day);
+  const [accidentMonth, setAccidentMonth] = useState(initialDate.month);
+  const [accidentYear, setAccidentYear] = useState(initialDate.year);
+  const [accidentHour, setAccidentHour] = useState(String(initialDate.hour));
+  const [accidentMinute, setAccidentMinute] = useState(initialDate.minute);
+  const [accidentPeriod, setAccidentPeriod] = useState(initialDate.period);
+
   const [showWeatherDropdown, setShowWeatherDropdown] = useState(false);
   const [showSurfaceDropdown, setShowSurfaceDropdown] = useState(false);
   const [showRoadTypeDropdown, setShowRoadTypeDropdown] = useState(false);
+  const [showIncidentTypeDropdown, setShowIncidentTypeDropdown] = useState(false);
+  const [showLightConditionDropdown, setShowLightConditionDropdown] = useState(false);
   const [showDayDropdown, setShowDayDropdown] = useState(false);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showHourDropdown, setShowHourDropdown] = useState(false);
+  const [showMinuteDropdown, setShowMinuteDropdown] = useState(false); // Added for consistency
 
   const weatherOptions = ["Sunny", "Rainy", "Cloudy", "Foggy", "Stormy"];
   const roadSurfaceOptions = ["Dry", "Wet", "Icy", "Muddy", "Oily"];
@@ -45,6 +68,8 @@ export default function SceneDetailsPage() {
     "Residential",
     "Rural Road",
   ];
+  const incidentTypeOptions = ["Rear-end Collision", "Side-swipe", "Head-on Collision", "Chain Collision", "Single Vehicle"];
+  const lightConditionOptions = ["Daylight", "Night (Lit)", "Night (Unlit)", "Dawn/Dusk", "Tunnel"];
   const dayOptions = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
   const monthOptions = [
     { value: "01", label: "Jan" },
@@ -60,7 +85,7 @@ export default function SceneDetailsPage() {
     { value: "11", label: "Nov" },
     { value: "12", label: "Dec" },
   ];
-  const yearOptions = ["2025", "2026"];
+  const yearOptions = ["2025", "2026"]; // Should probably include current year dynamically
   const hourOptions = ["12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
 
   const incrementMinute = () => {
@@ -89,10 +114,38 @@ export default function SceneDetailsPage() {
   };
 
   const handleContinue = () => {
+    // Construct ISO Date
+    let hour = parseInt(accidentHour, 10);
+    if (accidentPeriod === 'PM' && hour !== 12) hour += 12;
+    if (accidentPeriod === 'AM' && hour === 12) hour = 0;
+
+    const date = new Date(
+      parseInt(accidentYear),
+      parseInt(accidentMonth) - 1,
+      parseInt(accidentDay),
+      hour,
+      parseInt(accidentMinute)
+    );
+
+    updateDraft({
+      weather,
+      roadSurface, // Note: Store uses 'road_surface' in draft object definition? No, I defined keys matching UI variables in the store?
+      // Let's check store definition.
+      // store: road_surface: ''
+      // api: road_surface
+      // Here I used roadSurface. 
+      road_surface: roadSurface,
+      road_type: roadType,
+      incident_type: incidentType,
+      light_condition: lightCondition,
+      location,
+      accident_time: date.toISOString()
+    });
+
     router.push("/new-report/statement");
   };
 
-  const isFormComplete = weather && roadSurface && location && roadType && accidentDay && accidentMonth && accidentYear && accidentHour && accidentMinute;
+  const isFormComplete = weather && roadSurface && location && roadType && incidentType && lightCondition && accidentDay && accidentMonth && accidentYear && accidentHour && accidentMinute;
 
   const currentLocation = { lat: 3.1569, lng: 101.7123 };
 
@@ -158,6 +211,96 @@ export default function SceneDetailsPage() {
             elevation: 3,
           }}
         >
+          {/* Incident Type */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937", marginBottom: 8 }}>
+              Incident Type <Text style={{ color: "#EF4444" }}>*</Text>
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowIncidentTypeDropdown(!showIncidentTypeDropdown)}
+              style={{
+                borderWidth: 1,
+                borderColor: "#D1D5DB",
+                borderRadius: 8,
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: "#F9FAFB",
+              }}
+            >
+              <Text style={{ fontSize: 16, color: incidentType ? "#1F2937" : "#9CA3AF" }}>
+                {incidentType || "Select incident type"}
+              </Text>
+              <ChevronDown color="#6B7280" size={20} />
+            </TouchableOpacity>
+            {showIncidentTypeDropdown && (
+              <View style={{ marginTop: 8, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#D1D5DB" }}>
+                {incidentTypeOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => {
+                      setIncidentType(option);
+                      setShowIncidentTypeDropdown(false);
+                    }}
+                    style={{
+                      padding: 14,
+                      borderBottomWidth: index < incidentTypeOptions.length - 1 ? 1 : 0,
+                      borderBottomColor: "#E5E7EB",
+                    }}
+                  >
+                    <Text style={{ fontSize: 16, color: "#1F2937" }}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Light Condition */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937", marginBottom: 8 }}>
+              Light Condition <Text style={{ color: "#EF4444" }}>*</Text>
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowLightConditionDropdown(!showLightConditionDropdown)}
+              style={{
+                borderWidth: 1,
+                borderColor: "#D1D5DB",
+                borderRadius: 8,
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: "#F9FAFB",
+              }}
+            >
+              <Text style={{ fontSize: 16, color: lightCondition ? "#1F2937" : "#9CA3AF" }}>
+                {lightCondition || "Select light condition"}
+              </Text>
+              <ChevronDown color="#6B7280" size={20} />
+            </TouchableOpacity>
+            {showLightConditionDropdown && (
+              <View style={{ marginTop: 8, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#D1D5DB" }}>
+                {lightConditionOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => {
+                      setLightCondition(option);
+                      setShowLightConditionDropdown(false);
+                    }}
+                    style={{
+                      padding: 14,
+                      borderBottomWidth: index < lightConditionOptions.length - 1 ? 1 : 0,
+                      borderBottomColor: "#E5E7EB",
+                    }}
+                  >
+                    <Text style={{ fontSize: 16, color: "#1F2937" }}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
           {/* Weather */}
           <View style={{ marginBottom: 20 }}>
             <Text

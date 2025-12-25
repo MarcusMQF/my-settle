@@ -1,6 +1,7 @@
 import { Search, Filter, Eye, CheckCircle2, AlertCircle, ChevronDown, SlidersHorizontal, MoreHorizontal, Flag, Pin } from 'lucide-react';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { reportService } from '../services/api';
 
 // 1. Mock Data (Unchanged data, improved visuals)
 type ReportStatus = 'Pending' | 'Completed' | 'Mediation';
@@ -20,253 +21,51 @@ interface Report {
     isFlagged?: boolean;
 }
 
-const initialReports: Report[] = [
-    {
-        id: 'RPT-2025-001',
-        status: 'Completed',
-        driverA: 'Ali Bin Abu',
-        plateA: 'VAB 1234',
-        driverB: 'Tan Ah Seng',
-        plateB: 'JKA 5678',
-        handshake: 'Verified',
-        date: '22 Dec 2025',
-        time: '08:45 AM',
-        venue: 'Jalan Tun Razak, KL'
-    },
-    {
-        id: 'RPT-2025-002',
-        status: 'Pending',
-        driverA: 'Muthusamy A/L Raju',
-        plateA: 'WXY 9012',
-        driverB: 'Sarah Wong',
-        plateB: 'BND 3456',
-        handshake: 'Verified',
-        date: '22 Dec 2025',
-        time: '10:15 AM',
-        venue: 'LDP Highway, PJ'
-    },
-    {
-        id: 'RPT-2025-003',
-        status: 'Mediation',
-        driverA: 'Chong Wei Han',
-        plateA: 'PNG 7890',
-        driverB: 'Nurul Izzah',
-        plateB: 'KED 1122',
-        handshake: 'Verified',
-        date: '21 Dec 2025',
-        time: '11:20 PM',
-        venue: 'Jonker Walk, Melaka'
-    },
-    {
-        id: 'RPT-2025-004',
-        status: 'Completed',
-        driverA: 'Farid Kamil',
-        plateA: 'JHR 3344',
-        driverB: 'Jason Lim',
-        plateB: 'SEL 5566',
-        handshake: 'Verified',
-        date: '21 Dec 2025',
-        time: '06:30 PM',
-        venue: 'Penang Bridge'
-    },
-    {
-        id: 'RPT-2025-005',
-        status: 'Mediation',
-        driverA: 'Siti Aminah',
-        plateA: 'KEL 7788',
-        driverB: 'Rajesh Kumar',
-        plateB: 'PER 9900',
-        handshake: 'Verified',
-        date: '20 Dec 2025',
-        time: '02:00 PM',
-        venue: 'Federal Highway'
-    },
-    {
-        id: 'RPT-2025-006',
-        status: 'Completed',
-        driverA: 'Lee Kuan Yew',
-        plateA: 'SGP 1111',
-        driverB: 'Ahmad Albab',
-        plateB: 'MLK 2222',
-        handshake: 'Verified',
-        date: '20 Dec 2025',
-        time: '09:10 AM',
-        venue: 'Jalan Duta'
-    },
-    {
-        id: 'RPT-2025-007',
-        status: 'Pending',
-        driverA: 'Lim Wei',
-        plateA: 'NSE 3333',
-        driverB: 'Ahmad bin Hassan',
-        plateB: 'TRG 4444',
-        handshake: 'Verified',
-        date: '19 Dec 2025',
-        time: '03:30 PM',
-        venue: 'Bukit Bintang'
-    },
-    {
-        id: 'RPT-2025-008',
-        status: 'Mediation',
-        driverA: 'Suresh Pillai',
-        plateA: 'KLU 5555',
-        driverB: 'John Doe',
-        plateB: 'JOH 6666',
-        handshake: 'Verified',
-        date: '19 Dec 2025',
-        time: '01:15 PM',
-        venue: 'Subang Jaya'
-    },
-    {
-        id: 'RPT-2025-009',
-        status: 'Completed',
-        driverA: 'Wong Siew Ling',
-        plateA: 'PHG 7777',
-        driverB: 'Fatima Zahra',
-        plateB: 'KDR 8888',
-        handshake: 'Verified',
-        date: '18 Dec 2025',
-        time: '11:45 AM',
-        venue: 'Cheras'
-    },
-    {
-        id: 'RPT-2025-010',
-        status: 'Pending',
-        driverA: 'Alice Tan',
-        plateA: 'SGR 9999',
-        driverB: 'Bob Smith',
-        plateB: 'PEN 0001',
-        handshake: 'Verified',
-        date: '18 Dec 2025',
-        time: '09:30 AM',
-        venue: 'Bangsar'
-    },
-    {
-        id: 'RPT-2025-011',
-        status: 'Mediation',
-        driverA: 'Michael Chong',
-        plateA: 'PUT 1212',
-        driverB: 'Sarah Lee',
-        plateB: 'LAB 3434',
-        handshake: 'Verified',
-        date: '17 Dec 2025',
-        time: '04:20 PM',
-        venue: 'Petaling Jaya'
-    },
-    {
-        id: 'RPT-2025-012',
-        status: 'Completed',
-        driverA: 'David Teoh',
-        plateA: 'SAB 5656',
-        driverB: 'Emily Ng',
-        plateB: 'SAR 7878',
-        handshake: 'Verified',
-        date: '17 Dec 2025',
-        time: '02:10 PM',
-        venue: 'Klang'
-    },
-    {
-        id: 'RPT-2025-013',
-        status: 'Pending',
-        driverA: 'Frankie Lam',
-        plateA: 'NEG 9090',
-        driverB: 'Grace Ho',
-        plateB: 'MEL 1313',
-        handshake: 'Verified',
-        date: '16 Dec 2025',
-        time: '10:00 AM',
-        venue: 'Shah Alam'
-    },
-    {
-        id: 'RPT-2025-014',
-        status: 'Mediation',
-        driverA: 'Henry Lau',
-        plateA: 'PER 2424',
-        driverB: 'Ivy Chen',
-        plateB: 'KED 3535',
-        handshake: 'Verified',
-        date: '16 Dec 2025',
-        time: '08:50 AM',
-        venue: 'Kepong'
-    },
-    {
-        id: 'RPT-2025-015',
-        status: 'Completed',
-        driverA: 'Jacky Cheung',
-        plateA: 'PEN 4646',
-        driverB: 'Kelly Lim',
-        plateB: 'JOH 5757',
-        handshake: 'Verified',
-        date: '15 Dec 2025',
-        time: '05:40 PM',
-        venue: 'Setapak'
-    },
-    {
-        id: 'RPT-2025-016',
-        status: 'Pending',
-        driverA: 'Larry Low',
-        plateA: 'KEL 6868',
-        driverB: 'Mary Jane',
-        plateB: 'TER 7979',
-        handshake: 'Verified',
-        date: '15 Dec 2025',
-        time: '03:25 PM',
-        venue: 'Ampang'
-    },
-    {
-        id: 'RPT-2025-017',
-        status: 'Mediation',
-        driverA: 'Nancy Goh',
-        plateA: 'PAH 8080',
-        driverB: 'Oscar Wilde',
-        plateB: 'SEL 9191',
-        handshake: 'Verified',
-        date: '14 Dec 2025',
-        time: '01:05 PM',
-        venue: 'Gombak'
-    },
-    {
-        id: 'RPT-2025-018',
-        status: 'Completed',
-        driverA: 'Peter Parker',
-        plateA: 'NYC 1010',
-        driverB: 'Quinn Fabray',
-        plateB: 'LMA 2020',
-        handshake: 'Verified',
-        date: '14 Dec 2025',
-        time: '11:55 AM',
-        venue: 'Selayang'
-    },
-    {
-        id: 'RPT-2025-019',
-        status: 'Pending',
-        driverA: 'Ricky Martin',
-        plateA: 'SJU 3030',
-        driverB: 'Susan Boyle',
-        plateB: 'UKG 4040',
-        handshake: 'Verified',
-        date: '13 Dec 2025',
-        time: '09:40 AM',
-        venue: 'Rawang'
-    },
-    {
-        id: 'RPT-2025-020',
-        status: 'Mediation',
-        driverA: 'Tom Hanks',
-        plateA: 'USA 5050',
-        driverB: 'Uma Thurman',
-        plateB: 'HOL 6060',
-        handshake: 'Verified',
-        date: '13 Dec 2025',
-        time: '07:30 AM',
-        venue: 'Sungai Buloh'
-    }
-];
-
 export default function DashboardTable({ view, onViewReport }: { view: 'reports' | 'history'; onViewReport: (id: string) => void }) {
-    const [reports, setReports] = useState<Report[]>(initialReports);
+    const [reports, setReports] = useState<Report[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const data = await reportService.getDashboard();
+                const mappedReports: Report[] = data.map((item: any) => {
+                    // split date time if possible
+                    // Backend returns full session object, we need to extract info
+                    // Since we can't modify backend, we might get raw session data
+                    // We need to be careful if backend change was reverted
+
+                    let status: ReportStatus = 'Pending';
+                    if (item.status === 'PENDING_POLICE') status = 'Pending';
+                    else if (item.status === 'MEETING_STARTED') status = 'Mediation';
+                    else if (item.status === 'POLICE_SIGNED' || item.status === 'COMPLETED') status = 'Completed';
+
+                    return {
+                        id: item.id,
+                        status: status,
+                        driverA: item.driver_a_id || 'Unknown', // Fallback to ID if name not available in this endpoint
+                        plateA: '-',
+                        driverB: item.driver_b_id || 'Unknown',
+                        plateB: '-',
+                        handshake: 'Verified',
+                        date: new Date(item.created_at).toLocaleDateString(),
+                        time: new Date(item.created_at).toLocaleTimeString(),
+                        venue: 'Unknown',
+                        isFlagged: false
+                    };
+                });
+                setReports(mappedReports);
+            } catch (error) {
+                console.error("Failed to fetch dashboard", error);
+            }
+        };
+
+        fetchReports();
+        // Poll every 10 seconds
+        const interval = setInterval(fetchReports, 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Advanced Filters State
     const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);

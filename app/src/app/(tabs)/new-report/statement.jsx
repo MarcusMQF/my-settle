@@ -12,13 +12,16 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import ProgressSteps from "../../../components/ProgressSteps";
 
+import { useSessionStore } from "../../../utils/session/store";
+
 export default function StatementPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { draft, updateDraft } = useSessionStore();
 
-  const [statement, setStatement] = useState("");
-  const [whoWrong, setWhoWrong] = useState("");
-  const [why, setWhy] = useState("");
+  const [statement, setStatement] = useState(draft.description || "");
+  const [whoWrong, setWhoWrong] = useState(draft.at_fault_driver || "");
+  const [why, setWhy] = useState(draft.reason || "");
   const [dashcamVideo, setDashcamVideo] = useState(null);
 
   const handleUploadVideo = () => {
@@ -35,6 +38,11 @@ export default function StatementPage() {
   };
 
   const handleContinue = () => {
+    updateDraft({
+      description: statement,
+      at_fault_driver: whoWrong,
+      reason: why
+    });
     router.push("/new-report/review-sign");
   };
 
