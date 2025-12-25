@@ -31,8 +31,8 @@ async def create_session(user_id: str, db: Session = Depends(get_session)):
     
     # Generate QR with OTP embedded logic (or just link to deep link)
     # For this demo, we can just encode the OTP or SessionID+OTP
-    qr_data = f"mysettle://join?otp={otp}" 
-    # generate_qr_base64 now returns just the base64 string
+    # QR Data: Just the OTP so simple scanners/apps send the correct code
+    qr_data = otp 
     qr_image = QRService.generate_qr_base64(qr_data)
     
     return {
