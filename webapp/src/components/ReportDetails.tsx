@@ -1,5 +1,5 @@
 import {
-    ArrowLeft, Calendar, Clock, MapPin, CloudRain, Navigation, FileCheck, ShieldCheck, Download, FileText
+    ArrowLeft, Calendar, Clock, MapPin, CloudRain, Navigation, ShieldCheck, Download, FileText, Video
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
@@ -40,10 +40,18 @@ const mockReportDetails = {
         location: "Jalan Tun Razak, KL",
     },
     description: {
-        whatHappened: "Driver B rear-ended Driver A at the traffic light.",
-        whoWrong: "Driver B",
-        whyWrong: "Failed to brake in time.",
-        dashcam: "https://example.com/footage.mp4"
+        driverA: {
+            whatHappened: "I was stopped at the red light waiting for it to turn green. Suddenly, I felt a strong impact from behind. I checked my rear-view mirror and saw that the car behind me had crashed into my rear bumper.",
+            whoWrong: "Driver B",
+            whyWrong: "Failed to brake in time.",
+            dashcam: "https://example.com/footage-a.mp4"
+        },
+        driverB: {
+            whatHappened: "I was driving down Jalan Tun Razak. The traffic light turned amber, and the car in front stopped very abruptly. I tried to brake but couldn't stop in time due to the wet road surface.",
+            whoWrong: "Driver A",
+            whyWrong: "Stopped too suddenly.",
+            dashcam: "https://example.com/footage-b.mp4"
+        }
     },
     verification: {
         policeOfficer: "",
@@ -130,27 +138,65 @@ export default function ReportDetails({ reportId, onBack }: ReportDetailsProps) 
 
             {/* Section 4: Incident Description */}
             <Section title="Incident Description">
-                <div className="space-y-4">
-                    <div>
-                        <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">What Happened</span>
-                        <p className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">{mockReportDetails.description.whatHappened}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Who Was Wrong</span>
-                            <p className="font-medium text-gray-900">{mockReportDetails.description.whoWrong}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Driver A Statement */}
+                    <div className="space-y-4">
+                        <div className="pb-2 border-b border-gray-100">
+                            <h4 className="font-bold text-gray-900">Driver A's Statement</h4>
                         </div>
                         <div>
-                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Why Wrong</span>
-                            <p className="font-medium text-gray-900">{mockReportDetails.description.whyWrong}</p>
+                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">What Happened</span>
+                            <p className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm">
+                                {mockReportDetails.description.driverA.whatHappened}
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Who Was Wrong</span>
+                                <p className="font-medium text-gray-900">{mockReportDetails.description.driverA.whoWrong}</p>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Why Wrong</span>
+                                <p className="font-medium text-gray-900">{mockReportDetails.description.driverA.whyWrong}</p>
+                            </div>
+                        </div>
+                        <div className="pt-2">
+                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dashcam Footage</span>
+                            <a href="#" className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors w-full justify-center">
+                                <Video className="w-4 h-4" />
+                                View Driver A's Footage
+                            </a>
                         </div>
                     </div>
-                    <div>
-                        <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Dashcam Footage</span>
-                        <a href="#" className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-2">
-                            <FileCheck className="w-4 h-4" />
-                            View Footage
-                        </a>
+
+                    {/* Driver B Statement */}
+                    <div className="space-y-4">
+                        <div className="pb-2 border-b border-gray-100">
+                            <h4 className="font-bold text-gray-900">Driver B's Statement</h4>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">What Happened</span>
+                            <p className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm">
+                                {mockReportDetails.description.driverB.whatHappened}
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Who Was Wrong</span>
+                                <p className="font-medium text-gray-900">{mockReportDetails.description.driverB.whoWrong}</p>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Why Wrong</span>
+                                <p className="font-medium text-gray-900">{mockReportDetails.description.driverB.whyWrong}</p>
+                            </div>
+                        </div>
+                        <div className="pt-2">
+                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dashcam Footage</span>
+                            <a href="#" className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors w-full justify-center">
+                                <Video className="w-4 h-4" />
+                                View Driver B's Footage
+                            </a>
+                        </div>
                     </div>
                 </div>
             </Section>
@@ -177,8 +223,8 @@ export default function ReportDetails({ reportId, onBack }: ReportDetailsProps) 
                                 className={clsx(
                                     "py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all",
                                     fault === option
-                                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                                        : "border-gray-100 bg-white text-gray-600 hover:border-gray-200"
+                                        ? "border-blue-900 bg-blue-900 text-white shadow-md"
+                                        : "border-gray-100 bg-white text-gray-600 hover:border-gray-200 hover:bg-gray-50"
                                 )}
                             >
                                 {option}
@@ -243,12 +289,12 @@ function Section({ title, children }: { title: string, children: React.ReactNode
     );
 }
 
-function DriverCard({ label, data, color }: { label: string, data: any, color: 'blue' | 'gray' }) {
+function DriverCard({ label, data }: { label: string, data: any, color: 'blue' | 'gray' }) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className={clsx("px-6 py-4 border-b border-gray-100 flex items-center justify-between", color === 'blue' ? "bg-blue-50/50" : "bg-gray-50/50")}>
-                <h3 className="font-bold text-gray-900">{label}</h3>
-                <div className={clsx("w-2 h-2 rounded-full", color === 'blue' ? "bg-blue-500" : "bg-gray-400")}></div>
+            <div className="px-6 py-4 border-b border-blue-800 flex items-center justify-between bg-blue-900">
+                <h3 className="font-bold text-white">{label}</h3>
+                <div className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]"></div>
             </div>
             <div className="p-6 space-y-4">
                 <DetailRow label="Full Name" value={data.name} />

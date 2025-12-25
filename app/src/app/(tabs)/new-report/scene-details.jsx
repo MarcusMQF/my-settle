@@ -21,9 +21,10 @@ export default function SceneDetailsPage() {
   const [roadSurface, setRoadSurface] = useState("");
   const [location, setLocation] = useState("");
   const [roadType, setRoadType] = useState("");
-  const [accidentDay, setAccidentDay] = useState("");
-  const [accidentMonth, setAccidentMonth] = useState("");
-  const [accidentYear, setAccidentYear] = useState("");
+  const today = new Date();
+  const [accidentDay, setAccidentDay] = useState(String(today.getDate()).padStart(2, "0"));
+  const [accidentMonth, setAccidentMonth] = useState(String(today.getMonth() + 1).padStart(2, "0"));
+  const [accidentYear, setAccidentYear] = useState(String(today.getFullYear()));
   const [accidentHour, setAccidentHour] = useState("");
   const [accidentMinute, setAccidentMinute] = useState("");
   const [accidentPeriod, setAccidentPeriod] = useState("AM");
@@ -59,7 +60,7 @@ export default function SceneDetailsPage() {
     { value: "11", label: "Nov" },
     { value: "12", label: "Dec" },
   ];
-  const yearOptions = ["2025", "2024"];
+  const yearOptions = ["2025", "2026"];
   const hourOptions = ["12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
 
   const incrementMinute = () => {

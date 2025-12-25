@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Camera, CheckCircle, ArrowRight, X, Info } from "lucide-react-native";
@@ -14,6 +14,7 @@ export default function CaptureEvidencePage() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState([]);
+  const [viewPhotoUri, setViewPhotoUri] = useState(null);
   const cameraRef = useRef(null);
 
   const photoGuides = [
@@ -240,6 +241,21 @@ export default function CaptureEvidencePage() {
                   {guide.description}
                 </Text>
               </View>
+              {capturedPhotos[index] && (
+                <TouchableOpacity onPress={() => setViewPhotoUri(capturedPhotos[index])}>
+                  <Image
+                    source={{ uri: capturedPhotos[index] }}
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 8,
+                      marginLeft: 12,
+                      borderWidth: 1,
+                      borderColor: "#E5E7EB",
+                    }}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           ))}
         </View>
@@ -303,6 +319,7 @@ export default function CaptureEvidencePage() {
         )}
       </ScrollView>
 
+      {/* Camera Modal */}
       <Modal visible={showCamera} animationType="slide">
         <View style={{ flex: 1, backgroundColor: "#000" }}>
           <StatusBar style="light" />
@@ -376,6 +393,40 @@ export default function CaptureEvidencePage() {
           </View>
         </View>
       </Modal>
+
+      {/* Image Viewer Modal */}
+      <Modal visible={!!viewPhotoUri} transparent={true} animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              position: "absolute",
+              top: insets.top + 20,
+              right: 20,
+              zIndex: 10,
+              padding: 10,
+            }}
+            onPress={() => setViewPhotoUri(null)}
+          >
+            <X color="#fff" size={32} />
+          </TouchableOpacity>
+
+          {viewPhotoUri && (
+            <Image
+              source={{ uri: viewPhotoUri }}
+              style={{ width: "100%", height: "80%" }}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
+
