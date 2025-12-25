@@ -40,7 +40,7 @@ def log_action(thread, method, direction, description, status, payload=None):
     method_color = Colors.BLUE
     direction_color = Colors.GREEN if direction == "SEND" else Colors.YELLOW
     status_color = Colors.GREEN if status in ["OK", "SUCCESS"] else Colors.RED if status in ["KO",
-                                                                                             "FAILED"] else Colors.YELLOW
+                                                                                            "FAILED"] else Colors.YELLOW
 
     status_str = f"({status_color}{status}{Colors.END})"
     payload_str = ""
@@ -215,11 +215,24 @@ def run_tests():
     # ========== STEP 6: Police Meeting ==========
     print(f"\n{Colors.BOLD}>>> STEP 6: Police Intervention{Colors.END}")
 
+    # Check Dashboard (Should be PENDING_POLICE)
+    log_action("Police", "GET", "SEND", "/police/dashboard", "PENDING")
+    dash_res = client.get("/police/dashboard")
+    found = any(s['id'] == session_id for s in dash_res)
+    log_action("Police", "GET", "RECEIVE", f"Dashboard check (PENDING_POLICE): {found}", "SUCCESS" if found else "FAILED", dash_res)
+
     p_meeting = {"session_id": session_id, "police_id": "police_main"}
     log_action("Police", "POST", "SEND", "/police/meeting", "PENDING", p_meeting)
     meeting_res = client.post("/police/meeting", params=p_meeting)
     log_action("Police", "POST", "RECEIVE", "Meeting created", "SUCCESS", {"link": meeting_res.get('link')})
     time.sleep(1)
+
+    # Check Dashboard (Should be MEETING_STARTED)
+    log_action("Police", "GET", "SEND", "/police/dashboard", "PENDING")
+    dash_res = client.get("/police/dashboard")
+    found = any(s['id'] == session_id for s in dash_res)
+    found_status = next((s['status'] for s in dash_res if s['id'] == session_id), None)
+    log_action("Police", "GET", "RECEIVE", f"Dashboard check (MEETING_STARTED): {found}", "SUCCESS" if found else "FAILED", {"status": found_status})
 
     # ========== STEP 7: Police Verification ==========
     print(f"\n{Colors.BOLD}>>> STEP 7: Police Verification{Colors.END}")
@@ -229,13 +242,35 @@ def run_tests():
     details_res = client.get(f"/police/reports/{session_id}/details")
     
     # Log key details
-    log_action("Police", "GET", "RECEIVE", "Got Report Details", "SUCCESS", details_res)
+    log_action("Police", "GET", "RECEIVE", "Got Report Context", "SUCCESS", 
+               {"report_id": details_res.get('report_id'), "driver_a_evidences": len(details_res.get('driver_a', {}).get('evidences', []))})
     
+    report_id = details_res.get('report_id')
+
     # 2. Driver Checks Report Meta
     log_action("Driver A", "GET", "SEND", f"/session/report/{session_id}/meta", "PENDING")
     meta_res = client.get(f"/session/report/{session_id}/meta")
     log_action("Driver A", "GET", "RECEIVE", "Got Report Meta", "SUCCESS", 
                {"polis_repot_url": meta_res.get('polis_repot_url'), "police_signature": meta_res.get('police_signature')})
+
+    # ========== STEP 7.5: Police Generation ==========
+    print(f"\n{Colors.BOLD}>>> STEP 7.5: Police Generation{Colors.END}")
+    
+    # Police updates decision and generates final report
+    p_gen = {
+        "report_id": report_id,
+        "faulty_driver": "A", # This should auto-fill details for Driver A as faulty
+        "updates": {
+            "keputusan_awal": "SAMAN POL 257",
+            "seksyen_kesalahan": "Sek 41(1) APJ 1987",
+            "saman_amount": "300"
+        }
+    }
+    
+    log_action("Police", "POST", "SEND", "/police/reports/generate", "PENDING", p_gen)
+    gen_res = client.post("/police/reports/generate", json=p_gen)
+    log_action("Police", "POST", "RECEIVE", "Report Generated", "SUCCESS", gen_res)
+
 
     # ========== STEP 8: Police Signature ==========
     print(f"\n{Colors.BOLD}>>> STEP 8: Police Signature{Colors.END}")
@@ -246,6 +281,13 @@ def run_tests():
                               params=p_sign_police)
     log_action("Police", "POST", "RECEIVE", "Police signed report", "SUCCESS", {"status": police_sign.get('status')})
     time.sleep(1)
+
+    # Check Dashboard (Should be POLICE_SIGNED)
+    log_action("Police", "GET", "SEND", "/police/dashboard", "PENDING")
+    dash_res = client.get("/police/dashboard")
+    found = any(s['id'] == session_id for s in dash_res)
+    found_status = next((s['status'] for s in dash_res if s['id'] == session_id), None)
+    log_action("Police", "GET", "RECEIVE", f"Dashboard check (POLICE_SIGNED): {found}", "SUCCESS" if found else "FAILED", {"status": found_status})
 
     # ========== STEP 9: User Signatures ==========
     print(f"\n{Colors.BOLD}>>> STEP 9: User Signatures (Case Closure){Colors.END}")
@@ -265,6 +307,13 @@ def run_tests():
 
     # Wait for CASE_CLOSED
     time.sleep(3)
+    
+    # Check Dashboard (Should be COMPLETED)
+    log_action("Police", "GET", "SEND", "/police/dashboard", "PENDING")
+    dash_res = client.get("/police/dashboard")
+    found = any(s['id'] == session_id for s in dash_res)
+    found_status = next((s['status'] for s in dash_res if s['id'] == session_id), None)
+    log_action("Police", "GET", "RECEIVE", f"Dashboard check (COMPLETED): {found}", "SUCCESS" if found else "FAILED", {"status": found_status})
     
     print(f"\n{Colors.BOLD}{'=' * 80}{Colors.END}")
     print(f"{Colors.GREEN}{Colors.BOLD}✓ Test flow completed successfully{Colors.END}")

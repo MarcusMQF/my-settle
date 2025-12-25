@@ -56,7 +56,7 @@ class PDFService:
         doc.addPageTemplates([template])
         return doc
 
-    def generate_polis_repot(self, data: PoliceReportDetails, filename: str = None) -> str:
+    def generate_polis_repot(self, data: PoliceReportDetails, signed_by_pengadu: str = None, signed_by_police: str = None, filename: str = None) -> str:
         if not filename:
             filename = f"PolisRepot_{data.report_no.replace('/', '_')}.pdf"
         filepath = os.path.join(self.output_dir, filename)
@@ -79,8 +79,8 @@ class PDFService:
         style_norm = styles['Normal']
         
         # Parsing date/time
-        date_str = data.tarikh_repot.strftime("%d/%m/%Y")
-        time_str = data.tarikh_repot.strftime("%H:%M") # 24hr format
+        date_str = data.tarikh_repot.strftime("%d/%m/%y")
+        time_str = data.tarikh_repot.strftime("%I:%M %p") # 12hr format
         
         # Columns widths (Total 6.5 inch)
         col1_w = 1.2*inch # Label
@@ -196,10 +196,22 @@ class PDFService:
         
         # 7. Signatures
         # 6.5 inch total width
+        
+        # Signature styling
+        # If signed, we replace the line with the name in Bold/Italic
+        
+        sig_pengadu_display = "_"*25
+        if signed_by_pengadu:
+            sig_pengadu_display = f"{signed_by_pengadu.upper()}<br/>(digital signature)"
+            
+        sig_police_display = "_"*25
+        if signed_by_police:
+             sig_police_display = f"{signed_by_police.upper()}<br/>(digital signature)"
+        
         sig_data = [
             ["Tandatangan Pengadu:", "Tandatangan Jurubahasa\n(Jika ada):", "Tandatangan Penerima Repot:"],
             [Spacer(1, 0.4*inch), "", ""],
-            ["_"*25, "_"*25, "_"*25]
+            [Paragraph(sig_pengadu_display, style_val), "_"*25, Paragraph(sig_police_display, style_val)]
         ]
         t_sig = Table(sig_data, colWidths=[2.16*inch, 2.16*inch, 2.16*inch]) # Equal split ~2.16 inch
         t_sig.setStyle(TableStyle([
@@ -214,7 +226,10 @@ class PDFService:
         doc.build(elements)
         return filepath
 
-    def generate_rajah_kasar(self, data: PoliceReportDetails, sketch_path: str = None, filename: str = None) -> str:
+    def generate_rajah_kasar(self, data: PoliceReportDetails, sketch_data: any = None, filename: str = None) -> str:
+        """
+        sketch_data: Can be a file path (str) OR a file-like object (BytesIO)
+        """
         if not filename:
             filename = f"RajahKasar_{data.report_no.replace('/', '_')}.pdf"
         filepath = os.path.join(self.output_dir, filename)
@@ -229,7 +244,7 @@ class PDFService:
         val_w = 4.5 * inch
         
         # Format date properly
-        fmt_date = data.tarikh_kejadian.strftime("%d/%m/%Y %H:%M")
+        fmt_date = data.tarikh_kejadian.strftime("%d/%m/%y %I:%M %p")
         
         meta_data = [
             ["NO REPOT POLIS", ":", data.report_no],
@@ -259,8 +274,17 @@ class PDFService:
         # Inner content of the box
         box_content = []
         
-        if sketch_path and os.path.exists(sketch_path):
-             box_content.append(Image(sketch_path, width=5.5*inch, height=4*inch, kind='proportional'))
+        # Check if sketch_data is valid
+        has_sketch = False
+        if sketch_data:
+             if isinstance(sketch_data, str) and os.path.exists(sketch_data):
+                  has_sketch = True
+             elif hasattr(sketch_data, 'read'): # File-like object (BytesIO)
+                  has_sketch = True
+        
+        if has_sketch:
+             # reportlab Image supports file-like objects directly
+             box_content.append(Image(sketch_data, width=5.5*inch, height=4*inch, kind='proportional'))
         else:
              # Placeholder space
              box_content.append(Spacer(1, 4*inch))
@@ -301,7 +325,10 @@ class PDFService:
         style_bold = ParagraphStyle(name='Bold', parent=styles['Normal'], fontName='Helvetica-Bold')
 
         # 1. Top Right Info (Rujukan Kami, Tarikh)
-        fmt_now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        # Malaysia Time
+        from datetime import timedelta
+        now_my = datetime.utcnow() + timedelta(hours=8)
+        fmt_now = now_my.strftime("%d/%m/%y %I:%M %p")
         rujukan = f"Rujukan Kami: {data.no_kertas_siasatan or data.report_no}"
         
         elements.append(Paragraph(rujukan, style_right))
@@ -339,10 +366,10 @@ class PDFService:
         
         details_list = [
             ["No. Repot Polis", ":", data.report_no],
-            ["Tarikh & Masa Repot Polis", ":", data.tarikh_repot.strftime("%d/%m/%Y @ %H:%M")],
+            ["Tarikh & Masa Repot Polis", ":", data.tarikh_repot.strftime("%d/%m/%y %I:%M %p")],
             ["Kesalahan", ":", data.seksyen_kesalahan or "-"],
             ["Tempat Kejadian", ":", data.tempat_kejadian],
-            ["Tarikh & Masa Kejadian", ":", data.tarikh_kejadian.strftime("%d/%m/%Y @ %H:%M")],
+            ["Tarikh & Masa Kejadian", ":", data.tarikh_kejadian.strftime("%d/%m/%y %I:%M %p")],
             ["Tarikh & Masa Surat Dijana", ":", fmt_now]
         ]
         

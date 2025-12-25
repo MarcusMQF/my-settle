@@ -6,7 +6,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from srcs.database import get_session
 from srcs.models.session import AccidentSession
-from srcs.models.report import AccidentReport, PoliceReportDetails
+from srcs.models.report import AccidentReport, PoliceReportDetails, Evidence, EvidenceType
 from srcs.models.enums import SessionStatus
 from srcs.services.event_service import event_manager
 from srcs.services.qr_service import QRService
@@ -143,15 +143,45 @@ async def sign_session(session_id: str, user_id: str, signature: str, db: Sessio
             details = db.get(PoliceReportDetails, report.report_details_id)
             if details:
                 # 1. Polis Repot
-                f_polis = pdf_service.generate_polis_repot(details)
+                # Use signatures
+                signed_by_pengadu = None
+                signed_by_police = None
+                
+                if report.driver_a_signature:
+                    signed_by_pengadu = details.pengadu_nama
+                if report.police_signature:
+                    signed_by_police = details.pegawai_penyiasat_nama
+                
+                f_polis = pdf_service.generate_polis_repot(
+                    details, 
+                    signed_by_pengadu=signed_by_pengadu,
+                    signed_by_police=signed_by_police
+                )
                 url_polis = f"/reports/{os.path.basename(f_polis)}"
                 report.polis_repot_url = url_polis
                 
                 # 2. Rajah Kasar
-                # Note: We need a sketch path if available, for now passing None or logic to find it
-                # Logic: Fetch sketch evidence? For demo we can skip image or try to find it
-                # For now just generate the PDF wrapper
-                f_rajah = pdf_service.generate_rajah_kasar(details, sketch_path=None) 
+                # Resolve sketch again for completeness
+                import io
+                import base64
+                sketch_data = None
+                
+                stmt_sketch = select(Evidence).where(
+                    Evidence.type == EvidenceType.MAP_SKETCH,
+                    Evidence.draft_id.in_([report.driver_a_draft_id, report.driver_b_draft_id])
+                ).limit(1)
+                
+                sketch_ev = db.exec(stmt_sketch).first()
+                if sketch_ev and sketch_ev.content:
+                    try:
+                        content = sketch_ev.content
+                        if "," in content:
+                            _, content = content.split(",", 1)
+                        sketch_data = io.BytesIO(base64.b64decode(content))
+                    except:
+                        pass
+
+                f_rajah = pdf_service.generate_rajah_kasar(details, sketch_data=sketch_data) 
                 url_rajah = f"/reports/{os.path.basename(f_rajah)}"
                 report.rajah_kasar_url = url_rajah
                 
