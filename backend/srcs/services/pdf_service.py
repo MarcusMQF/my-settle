@@ -79,8 +79,8 @@ class PDFService:
         style_norm = styles['Normal']
         
         # Parsing date/time
-        date_str = data.tarikh_repot.strftime("%d/%m/%Y")
-        time_str = data.tarikh_repot.strftime("%H:%M") # 24hr format
+        date_str = data.tarikh_repot.strftime("%d/%m/%y")
+        time_str = data.tarikh_repot.strftime("%I:%M %p") # 12hr format
         
         # Columns widths (Total 6.5 inch)
         col1_w = 1.2*inch # Label
@@ -229,7 +229,7 @@ class PDFService:
         val_w = 4.5 * inch
         
         # Format date properly
-        fmt_date = data.tarikh_kejadian.strftime("%d/%m/%Y %H:%M")
+        fmt_date = data.tarikh_kejadian.strftime("%d/%m/%y %I:%M %p")
         
         meta_data = [
             ["NO REPOT POLIS", ":", data.report_no],
@@ -301,7 +301,10 @@ class PDFService:
         style_bold = ParagraphStyle(name='Bold', parent=styles['Normal'], fontName='Helvetica-Bold')
 
         # 1. Top Right Info (Rujukan Kami, Tarikh)
-        fmt_now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        # Malaysia Time
+        from datetime import timedelta
+        now_my = datetime.utcnow() + timedelta(hours=8)
+        fmt_now = now_my.strftime("%d/%m/%y %I:%M %p")
         rujukan = f"Rujukan Kami: {data.no_kertas_siasatan or data.report_no}"
         
         elements.append(Paragraph(rujukan, style_right))
@@ -339,10 +342,10 @@ class PDFService:
         
         details_list = [
             ["No. Repot Polis", ":", data.report_no],
-            ["Tarikh & Masa Repot Polis", ":", data.tarikh_repot.strftime("%d/%m/%Y @ %H:%M")],
+            ["Tarikh & Masa Repot Polis", ":", data.tarikh_repot.strftime("%d/%m/%y %I:%M %p")],
             ["Kesalahan", ":", data.seksyen_kesalahan or "-"],
             ["Tempat Kejadian", ":", data.tempat_kejadian],
-            ["Tarikh & Masa Kejadian", ":", data.tarikh_kejadian.strftime("%d/%m/%Y @ %H:%M")],
+            ["Tarikh & Masa Kejadian", ":", data.tarikh_kejadian.strftime("%d/%m/%y %I:%M %p")],
             ["Tarikh & Masa Surat Dijana", ":", fmt_now]
         ]
         

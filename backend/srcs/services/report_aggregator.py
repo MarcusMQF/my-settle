@@ -2,6 +2,15 @@ from datetime import datetime, timedelta
 from srcs.models.report import PoliceReportDetails, AccidentReportDraft, AccidentReport
 from srcs.models.user import User
 
+class PoliceStationData:
+    BALAI_POLIS: str = "Balai Polis Trafik Kuala Lumpur"
+    DAERAH: str = "Kuala Lumpur"
+    KONTINJEN: str = "WPKL"
+    PEGAWAI_PENYIASAT_NAMA: str = "INSP. RAZAK BIN AHMAD"
+    PEGAWAI_PENYIASAT_PANGKAT: str = "INSP"
+    PEGAWAI_PENYIASAT_SKETCH: str = "KPL. MUTHU"
+
+
 def parse_ic_details(ic_no: str):
     """
     Parses a Malaysian IC number (format: YYMMDD-PB-####) to extract
@@ -62,7 +71,9 @@ def generate_police_details(
     # Secondary Source: Draft B (Fallback if Draft A is missing info)
     
     # 1.1 Incident Time
-    accident_time = draft_a.accident_time or draft_b.accident_time or datetime.now()
+    # Fallback to Malaysia Time now if not provided
+    now_my_fallback = datetime.utcnow() + timedelta(hours=8)
+    accident_time = draft_a.accident_time or draft_b.accident_time or now_my_fallback
     
     # 1.2 Location
     location = draft_a.location or draft_b.location or "Lokasi Tidak Dinyatakan"
@@ -99,7 +110,9 @@ def generate_police_details(
 
     
     # --- 2. Construct Object ---
-    current_year = str(datetime.now().year)
+    # Malaysia Time: UTC + 8
+    now_my = datetime.utcnow() + timedelta(hours=8)
+    current_year = str(now_my.year)
     
     # Parse User A IC details
     pengadu_dob, pengadu_age, pengadu_gender = parse_ic_details(user_a.ic_no)
@@ -109,11 +122,13 @@ def generate_police_details(
         
         # 1. Header Info (Placeholders)
         report_no=f"DRAFT/{session_id[:8].upper()}/{current_year}",
-        balai_polis="TBD (Auto-assigned)",
-        daerah="TBD",
-        kontinjen="TBD",
+        balai_polis=PoliceStationData.BALAI_POLIS,
+        daerah=PoliceStationData.DAERAH,
+        kontinjen=PoliceStationData.KONTINJEN,
         tahun=current_year,
         
+        tarikh_repot=now_my, # Set report time to now (when drafts are submitted/aggregated)
+
         # 2. Penerima (System)
         penerima_nama="SISTEM MYSETTLE",
         penerima_id="SYS-AUTO",
@@ -131,6 +146,13 @@ def generate_police_details(
         pengadu_jantina=pengadu_gender or "-",
         pengadu_keturunan="-", # Not derivable from IC
         
+        # Recipient defaults to Pengadu
+        penerima_surat_nama=user_a.name,
+        penerima_surat_ic=user_a.ic_no,
+        penerima_surat_alamat=user_a.address or "Alamat Tidak Dinyatakan",
+        penerima_surat_kenderaan_no=user_a.car_plate,
+        penerima_surat_kenderaan_jenis=user_a.car_model,
+
         # 4. Incident Details
         tarikh_kejadian=accident_time,
         tempat_kejadian=location,
@@ -138,7 +160,7 @@ def generate_police_details(
         keterangan_kes=final_description,
         
         # 5. Rajah Kasar Metadata
-        pegawai_penyiasat_sketch="TBD",
+        pegawai_penyiasat_sketch=PoliceStationData.PEGAWAI_PENYIASAT_SKETCH,
         
         # 6. Vehicles
         # Driver A
@@ -161,8 +183,8 @@ def generate_police_details(
         catatan_keputusan="-",
         
         # 8. Officer
-        pegawai_penyiasat_nama="TBD",
-        pegawai_penyiasat_pangkat="-"
+        pegawai_penyiasat_nama=PoliceStationData.PEGAWAI_PENYIASAT_NAMA,
+        pegawai_penyiasat_pangkat=PoliceStationData.PEGAWAI_PENYIASAT_PANGKAT
     )
 
 def create_accident_report(
