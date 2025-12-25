@@ -14,9 +14,9 @@ class VerifyRequest(BaseModel):
     description: str
 
 @router.post("/scene-map")
-def get_scene_map(req: MapRequest):
-    return {"url": MapService.generate_scene_sketch(req.lat, req.lng)}
+async def get_scene_map(req: MapRequest):
+    return {"image": await MapService.generate_scene_sketch(req.lat, req.lng)}
 
 @router.post("/verify-image")
-def verify_image(req: VerifyRequest):
+async def verify_image(req: VerifyRequest):
     return GeminiService.validate_image(req.image_base64, req.description)
