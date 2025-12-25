@@ -56,7 +56,7 @@ class PDFService:
         doc.addPageTemplates([template])
         return doc
 
-    def generate_polis_repot(self, data: PoliceReportDetails, filename: str = None) -> str:
+    def generate_polis_repot(self, data: PoliceReportDetails, signed_by_pengadu: str = None, signed_by_police: str = None, filename: str = None) -> str:
         if not filename:
             filename = f"PolisRepot_{data.report_no.replace('/', '_')}.pdf"
         filepath = os.path.join(self.output_dir, filename)
@@ -196,10 +196,22 @@ class PDFService:
         
         # 7. Signatures
         # 6.5 inch total width
+        
+        # Signature styling
+        # If signed, we replace the line with the name in Bold/Italic
+        
+        sig_pengadu_display = "_"*25
+        if signed_by_pengadu:
+            sig_pengadu_display = f"{signed_by_pengadu.upper()}\n\"(digital signature)\""
+            
+        sig_police_display = "_"*25
+        if signed_by_police:
+             sig_police_display = f"{signed_by_police.upper()}\n\"(digital signature)\""
+        
         sig_data = [
             ["Tandatangan Pengadu:", "Tandatangan Jurubahasa\n(Jika ada):", "Tandatangan Penerima Repot:"],
             [Spacer(1, 0.4*inch), "", ""],
-            ["_"*25, "_"*25, "_"*25]
+            [Paragraph(sig_pengadu_display, style_val), "_"*25, Paragraph(sig_police_display, style_val)]
         ]
         t_sig = Table(sig_data, colWidths=[2.16*inch, 2.16*inch, 2.16*inch]) # Equal split ~2.16 inch
         t_sig.setStyle(TableStyle([
@@ -214,7 +226,10 @@ class PDFService:
         doc.build(elements)
         return filepath
 
-    def generate_rajah_kasar(self, data: PoliceReportDetails, sketch_path: str = None, filename: str = None) -> str:
+    def generate_rajah_kasar(self, data: PoliceReportDetails, sketch_data: any = None, filename: str = None) -> str:
+        """
+        sketch_data: Can be a file path (str) OR a file-like object (BytesIO)
+        """
         if not filename:
             filename = f"RajahKasar_{data.report_no.replace('/', '_')}.pdf"
         filepath = os.path.join(self.output_dir, filename)
@@ -259,8 +274,17 @@ class PDFService:
         # Inner content of the box
         box_content = []
         
-        if sketch_path and os.path.exists(sketch_path):
-             box_content.append(Image(sketch_path, width=5.5*inch, height=4*inch, kind='proportional'))
+        # Check if sketch_data is valid
+        has_sketch = False
+        if sketch_data:
+             if isinstance(sketch_data, str) and os.path.exists(sketch_data):
+                  has_sketch = True
+             elif hasattr(sketch_data, 'read'): # File-like object (BytesIO)
+                  has_sketch = True
+        
+        if has_sketch:
+             # reportlab Image supports file-like objects directly
+             box_content.append(Image(sketch_data, width=5.5*inch, height=4*inch, kind='proportional'))
         else:
              # Placeholder space
              box_content.append(Spacer(1, 4*inch))

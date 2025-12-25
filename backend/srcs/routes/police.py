@@ -136,6 +136,7 @@ pdf_service = PDFService()
 
 @router.post("/reports/generate")
 def generate_reports(req: GenerateReportRequest, db: Session = Depends(get_session)):
+    import uuid
     # 1. Fetch Report
     report = db.get(AccidentReport, req.report_id)
     if not report:
@@ -178,21 +179,19 @@ def generate_reports(req: GenerateReportRequest, db: Session = Depends(get_sessi
             if hasattr(details, key):
                 setattr(details, key, value)
     
+    # Autofill Saman No if not provided
+    if not details.saman_no:
+        details.saman_no = f"SAMAN-{str(uuid.uuid4())[:8].upper()}"
+
     db.add(details)
     db.commit()
     db.refresh(details)
     
-    # 3. Resolve Sketch
-    # Priority:
-    #   1. Look for 'official' sketch if implemented
-    #   2. Look for MAP_SKETCH linked to report
-    #   3. Look for MAP_SKETCH linked to Driver A
-    #   4. Look for MAP_SKETCH linked to Driver B
+    # 3. Resolve Sketch (In-Memory)
+    import io
+    import base64
+    sketch_data = None
     
-    sketch_path = None
-    
-    # Try to find sketch evidence
-    # We search for Evidence with type MAP_SKETCH associated with this report's drafts
     stmt_sketch = select(Evidence).where(
         Evidence.type == EvidenceType.MAP_SKETCH,
         Evidence.draft_id.in_([report.driver_a_draft_id, report.driver_b_draft_id])
@@ -200,44 +199,41 @@ def generate_reports(req: GenerateReportRequest, db: Session = Depends(get_sessi
     
     sketch_ev = db.exec(stmt_sketch).first()
     
-    if sketch_ev:
-        # Check if content is Base64 or URL
-        # For this implementation, let's assume if it starts with 'data:image', it's base64
-        # We need to save it to a temp file for the PDF service
-        import base64
-        import tempfile
-        
-        content = sketch_ev.content
-        if "," in content:
-            header, content = content.split(",", 1)
-            
+    if sketch_ev and sketch_ev.content:
         try:
-            img_data = base64.b64decode(content)
-            # Create temp file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                tmp.write(img_data)
-                sketch_path = tmp.name
+            content = sketch_ev.content
+            if "," in content:
+                _, content = content.split(",", 1)
+            img_bytes = base64.b64decode(content)
+            sketch_data = io.BytesIO(img_bytes)
         except Exception as e:
             print(f"Failed to decode sketch: {e}")
-            sketch_path = None
+            sketch_data = None
     
-    # 4. Generate PDFs
+    # 4. Determine Signatures
+    # We pass the Name of the signer if signature exists
+    signed_by_pengadu = None
+    signed_by_police = None
+    
+    if report.driver_a_signature:
+         signed_by_pengadu = details.pengadu_nama # Driver A is pengadu
+    if report.police_signature:
+         signed_by_police = details.pegawai_penyiasat_nama
+
+    # 5. Generate PDFs
     try:
         # 1. Polis Repot
-        p_path = pdf_service.generate_polis_repot(details)
+        p_path = pdf_service.generate_polis_repot(
+            details, 
+            signed_by_pengadu=signed_by_pengadu, 
+            signed_by_police=signed_by_police
+        )
         
         # 2. Rajah Kasar 
-        r_path = pdf_service.generate_rajah_kasar(details, sketch_path=sketch_path)
+        r_path = pdf_service.generate_rajah_kasar(details, sketch_data=sketch_data)
         
         # 3. Keputusan
         k_path = pdf_service.generate_keputusan(details)
-        
-        # Cleanup temp file
-        if sketch_path and os.path.exists(sketch_path):
-             # Ideally we delete it, but maybe PDF service needs it async? 
-             # Assuming synchronous PDF generation, we can delete.
-             pass 
-             # os.remove(sketch_path) 
 
         return {
             "message": "Reports generated successfully",
@@ -253,27 +249,65 @@ def generate_reports(req: GenerateReportRequest, db: Session = Depends(get_sessi
 @router.get("/reports/{session_id}/download/{report_type}")
 def download_report(session_id: str, report_type: str, db: Session = Depends(get_session)):
     # report_type: 'polis_repot', 'rajah_kasar', 'keputusan'
-    details = db.exec(select(PoliceReportDetails).where(PoliceReportDetails.session_id == session_id)).first()
-    if not details:
-        raise HTTPException(404, "Report details not found for this session")
+    
+    # Needs session to find report to find drivers
+    session_obj = db.get(AccidentSession, session_id)
+    if not session_obj:
+        raise HTTPException(404, "Session not found")
+        
+    stm_rep = select(AccidentReport).where(AccidentReport.session_id == session_id)
+    report = db.exec(stm_rep).first()
+    
+    if not report or not report.report_details_id:
+        raise HTTPException(404, "Report details not found")
+        
+    details = db.get(PoliceReportDetails, report.report_details_id)
     
     try:
         path = ""
-        # NOTE: This re-generates without the sketch if we don't pass it.
-        # Ideally we should serve the files generated in the 'generate' step.
-        # But 'AccidentReport' model has url fields: polis_repot_url etc.
-        # Those URLs point to here. So we must serve the file.
-        
-        # Let's trust PDFService to cache or just regenerate for now (without sketch potentially if not passed).
-        # To fix this properly, we should really just return the file from a static dir if it exists.
         
         if report_type == "polis_repot":
-            path = pdf_service.generate_polis_repot(details)
+            # Check signatures again
+            signed_by_pengadu = None
+            signed_by_police = None
+            
+            # Driver A is Pengadu
+            if report.driver_a_signature:
+                signed_by_pengadu = details.pengadu_nama
+            if report.police_signature:
+                signed_by_police = details.pegawai_penyiasat_nama
+            
+            path = pdf_service.generate_polis_repot(
+                details,
+                signed_by_pengadu=signed_by_pengadu,
+                signed_by_police=signed_by_police
+            )
+            
         elif report_type == "rajah_kasar":
-            # We loose the sketch path here! 
-            # This is a limitation of the current 'Regenerate on Download' approach.
-            # But user asked for minimal change.
-            path = pdf_service.generate_rajah_kasar(details)
+            # Re-fetch sketch
+            import io
+            import base64
+            sketch_data = None
+            
+            stmt_sketch = select(Evidence).where(
+                Evidence.type == EvidenceType.MAP_SKETCH,
+                Evidence.draft_id.in_([report.driver_a_draft_id, report.driver_b_draft_id])
+            ).limit(1)
+            
+            sketch_ev = db.exec(stmt_sketch).first()
+            
+            if sketch_ev and sketch_ev.content:
+                try:
+                    content = sketch_ev.content
+                    if "," in content:
+                        _, content = content.split(",", 1)
+                    img_bytes = base64.b64decode(content)
+                    sketch_data = io.BytesIO(img_bytes)
+                except:
+                    pass
+            
+            path = pdf_service.generate_rajah_kasar(details, sketch_data=sketch_data)
+            
         elif report_type == "keputusan":
             path = pdf_service.generate_keputusan(details)
         else:
