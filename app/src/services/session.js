@@ -1,7 +1,6 @@
 import { api, BASE_URL } from './api';
 
 export const sessionService = {
-    // Stage 1: Session Init
     createSession: async (userId) => {
         return api.post(`/session/create?user_id=${userId}`, {});
     },
