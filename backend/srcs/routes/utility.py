@@ -19,4 +19,4 @@ async def get_scene_map(req: MapRequest):
 
 @router.post("/verify-image")
 async def verify_image(req: VerifyRequest):
-    return GeminiService.validate_image(req.image_base64, req.description)
+    return await GeminiService.validate_image(req.image_base64, req.description)

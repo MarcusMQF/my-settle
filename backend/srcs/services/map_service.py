@@ -1,6 +1,8 @@
 import requests
 import os
 import contextily as ctx
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
