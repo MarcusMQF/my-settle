@@ -1,26 +1,64 @@
 import requests
 import os
+import contextily as ctx
+import matplotlib.pyplot as plt
 
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "mock_key")
+
+import asyncio
 
 class MapService:
     @staticmethod
-    def generate_scene_sketch(lat: float, lng: float) -> str:
-        # Returns a Static Map URL or Base64
-        if GOOGLE_MAPS_API_KEY == "mock_key":
-            # Return a placeholder for demo
-            return "https://maps.googleapis.com/maps/api/staticmap?center=40.714728,-73.998672&zoom=12&size=400x400&key=YOUR_API_KEY"
-            
-        base_url = "https://maps.googleapis.com/maps/api/staticmap"
-        params = {
-            "center": f"{lat},{lng}",
-            "zoom": 18,
-            "size": "600x400",
-            "maptype": "satellite",
-            "markers": f"color:red|{lat},{lng}",
-            "key": GOOGLE_MAPS_API_KEY
-        }
-        # In a real app, we might download this and convert to base64, or just return the URL
-        # For this demo, returning the URL is cleaner for the frontend.
-        req = requests.Request('GET', base_url, params=params).prepare()
-        return req.url
+    def _generate_scene_sketch_sync(lat: float, lon: float) -> str:
+        """
+        Synchronous implementation of scene sketch generation.
+        :param lat: latitude
+        :param lon: longitude
+        :return: Base64 encoded image
+        """
+        # 1. Define the area (small buffer around the point)
+        # 0.001 degrees is roughly 100 meters
+        d = 0.001
+        west, south = lon - d, lat - d
+        east, north = lon + d, lat + d
+
+        print(f"Fetching satellite data for {lat}, {lon}...")
+
+        # 2. Download the image from Esri World Imagery
+        # source=ctx.providers.Esri.WorldImagery is the key here
+        image, extent = ctx.bounds2img(
+            west, south, east, north,
+            ll=True,  # Input coordinates are Lat/Lon (WGS84)
+            source=ctx.providers.Esri.WorldImagery,
+            zoom=19
+        )
+
+        # 3. Save the image nicely
+        # We use matplotlib to save it without axes/borders
+        fig = plt.figure(frameon=False)
+        fig.set_size_inches(6, 6)  # Image size
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+
+        ax.imshow(image, extent=extent, aspect='auto')
+
+        # Save to in-memory buffer
+        import io
+        import base64
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+        print(f"Success! Generated base64 image.")
+        return img_base64
+
+    @staticmethod
+    async def generate_scene_sketch(lat: float, lon: float) -> str:
+        """
+        Async wrapper for sketch generation to prevent blocking.
+        """
+        return await asyncio.to_thread(MapService._generate_scene_sketch_sync, lat, lon)
