@@ -26,6 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static Files
+from fastapi.staticfiles import StaticFiles
+if not os.path.exists("generated_reports"):
+    os.makedirs("generated_reports")
+app.mount("/reports", StaticFiles(directory="generated_reports"), name="reports")
+
 # Include Routers
 app.include_router(auth.router)
 app.include_router(session.router)

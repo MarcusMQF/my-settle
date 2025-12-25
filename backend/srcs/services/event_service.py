@@ -25,7 +25,7 @@ class EventService:
     async def publish(self, session_id: str, event_type: str, data: dict):
         if session_id in self.subscribers:
             message = {"event": event_type, "data": data}
-            for queue in self.subscribers[session_id]:
+            for queue in list(self.subscribers[session_id]):
                 await queue.put(message)
             logging.info(f"Published {event_type} to {len(self.subscribers[session_id])} clients in session {session_id}")
 
