@@ -49,7 +49,8 @@ async def join_session(otp: str, user_id: str, db: Session = Depends(get_session
     session_obj = db.exec(statement).first()
     
     if not session_obj:
-        raise HTTPException(status_code=404, detail="Invalid OTP")
+        print(f"DEBUG: Failed to match OTP. Received: '{otp}'")
+        raise HTTPException(status_code=404, detail=f"Invalid OTP: Received '{otp}'")
         
     if session_obj.driver_b_id:
          if session_obj.driver_b_id != user_id:
