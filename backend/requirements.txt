@@ -10,3 +10,4 @@ reportlab
 contextily
 matplotlib
 rasterio
+google-genai

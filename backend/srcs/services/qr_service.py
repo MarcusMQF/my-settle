@@ -3,12 +3,12 @@ import io
 import base64
 import random
 import string
+import secrets
 
 class QRService:
     @staticmethod
     def generate_otp() -> str:
-        # Generate a 6-digit numeric OTP
-        return ''.join(random.choices(string.digits, k=6))
+        return secrets.token_urlsafe(12)
 
     @staticmethod
     def generate_qr_base64(data: str) -> str:
