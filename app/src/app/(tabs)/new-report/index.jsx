@@ -1,31 +1,73 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { QrCode, Camera, ArrowLeft, X, RefreshCw, Shield } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCameraPermissions } from "expo-camera";
 import ProgressSteps from "../../../components/ProgressSteps";
+import { sessionService } from "../../../services/session";
+import { useAuth } from "../../../utils/auth/useAuth";
+import { useSessionStore } from "../../../utils/session/store";
 
 export default function NewReportPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showQRModal, setShowQRModal] = useState(false);
-  const [qrCode, setQrCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
 
-  const generateQRCode = () => {
+  const { auth } = useAuth();
+  const { setSession, otp, qrImage, sessionId, status } = useSessionStore();
+
+  // Polling to check if partner has joined
+  useEffect(() => {
+    let interval;
+    if (sessionId && status === 'CREATED' && otp) {
+      interval = setInterval(async () => {
+        try {
+          // Poll using reconnect endpoint to check status
+          const response = await sessionService.reconnectSession(otp, auth?.user?.id);
+          if (response.status === 'HANDSHAKE' && response.partner) {
+            setSession({
+              status: 'HANDSHAKE',
+              partner: response.partner,
+              // Ensure role is preserved or updated
+              role: response.role
+            });
+            clearInterval(interval);
+            setShowQRModal(false);
+            router.push("/new-report/partner-verified");
+          }
+        } catch (error) {
+          console.log("Polling error:", error);
+        }
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [sessionId, status, otp]);
+
+  const generateQRCode = async () => {
     setIsGenerating(true);
-    // Simulate QR code generation with unique session ID
-    setTimeout(() => {
-      const timestamp = Date.now().toString(36).toUpperCase();
-      const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const sessionId = `MYSETTLE-${timestamp}-${random}`;
-      setQrCode(sessionId);
+    try {
+      const response = await sessionService.createSession(auth?.user?.id || 'TEST');
+
+      // Response format: { session_id, otp, qr_image } - assuming qr_image is base64 string
+      setSession({
+        sessionId: response.session_id,
+        otp: response.otp,
+        qrImage: response.qr_image, // If backend returns base64, prepend 'data:image/png;base64,' if not already
+        role: 'DRIVER_A',
+        status: 'CREATED'
+      });
+
+    } catch (error) {
+      console.error("Failed to create session:", error);
+      alert("Failed to generate session. Please try again.");
+    } finally {
       setIsGenerating(false);
-    }, 800);
+    }
   };
 
   const handleGenerateQR = () => {
@@ -38,17 +80,16 @@ export default function NewReportPage() {
   };
 
   const handleScanPartner = async () => {
-    // If permission already granted, navigate directly
     if (permission?.granted) {
       router.push("/new-report/scan-partner");
       return;
     }
-    
+
     // Request camera permission
     setIsRequestingCamera(true);
     const result = await requestPermission();
     setIsRequestingCamera(false);
-    
+
     // Navigate regardless of result - scan page will handle denied permission
     router.push("/new-report/scan-partner");
   };
@@ -329,6 +370,12 @@ export default function NewReportPage() {
                     Generating...
                   </Text>
                 </View>
+              ) : (qrImage && qrImage.length > 50) ? (
+                <Image
+                  source={{ uri: `data:image/png;base64,${qrImage}` }}
+                  style={{ width: 220, height: 220 }}
+                  resizeMode="contain"
+                />
               ) : (
                 <QrCode color="#1E3A8A" size={180} />
               )}
@@ -336,21 +383,28 @@ export default function NewReportPage() {
 
             {/* Bottom Section - Same Width */}
             <View style={{ width: 220, alignItems: "center" }}>
-              {/* Session ID */}
+              {/* Session Details */}
+              <View style={{ marginBottom: 16, alignItems: 'center' }}>
+                <Text style={{ fontSize: 11, color: "#9CA3AF" }}>OTP Code</Text>
+                <Text style={{ fontSize: 24, fontWeight: "800", color: "#1E3A8A", letterSpacing: 2 }}>
+                  {otp || '--- ---'}
+                </Text>
+              </View>
+
               <Text style={{ fontSize: 11, color: "#9CA3AF", textAlign: "center" }}>
                 Session ID
               </Text>
               <Text
                 style={{
-                  fontSize: 11,
-                  fontWeight: "600",
+                  fontSize: 10,
+                  fontWeight: "500",
                   color: "#6B7280",
                   textAlign: "center",
                   marginTop: 2,
                   marginBottom: 12,
                 }}
               >
-                {isGenerating ? "Generating..." : qrCode}
+                {sessionId || "Generating..."}
               </Text>
 
               {/* Regenerate Button */}

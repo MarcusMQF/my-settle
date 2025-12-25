@@ -11,18 +11,25 @@ import {
   Video,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useLoginStore } from "../../utils/auth/loginStore";
+import { useAuth } from "../../utils/auth/useAuth";
+import { authService } from "../../services/auth";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isLoggedIn: isAuthenticated, userName, setLoggedIn } = useLoginStore();
+  const { isAuthenticated, auth, signIn, setAuth } = useAuth();
 
-  const handleLogin = () => {
-    // Simulate MyDigital ID login
-    setTimeout(() => {
-      setLoggedIn("ALI BIN AHMAD");
-    }, 1000);
+  // Use the name from the auth object (API response)
+  const userName = auth?.user?.name || "User";
+
+  const handleLogin = async () => {
+    try {
+      const userId = Date.now().toString();
+      const user = await authService.login(userId);
+      setAuth({ user });
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
   const handleStartReport = () => {
@@ -58,6 +65,7 @@ export default function HomePage() {
           {/* Profile Icon - Only show when logged in */}
           {isAuthenticated && (
             <TouchableOpacity
+              onPress={() => router.push("/profile")}
               style={{
                 width: 50,
                 height: 50,
@@ -76,7 +84,7 @@ export default function HomePage() {
                   fontWeight: "700",
                 }}
               >
-                M
+                {userName.charAt(0)}
               </Text>
             </TouchableOpacity>
           )}
@@ -188,7 +196,7 @@ export default function HomePage() {
                   <Text
                     style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}
                   >
-                    NRIC: 050101-01-5555
+                    NRIC: {auth?.user?.ic_no || "050101-01-5555"}
                   </Text>
                 </View>
               </View>

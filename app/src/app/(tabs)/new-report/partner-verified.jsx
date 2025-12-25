@@ -4,10 +4,12 @@ import { StatusBar } from "expo-status-bar";
 import { CheckCircle, ArrowRight, Info } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import ProgressSteps from "../../../components/ProgressSteps";
+import { useSessionStore } from "../../../utils/session/store";
 
 export default function PartnerVerifiedPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { partner } = useSessionStore();
 
   const handleContinue = () => {
     router.push("/new-report/capture-evidence");
@@ -91,17 +93,17 @@ export default function PartnerVerifiedPage() {
           </View>
 
           {[
-            { label: "Full Name", value: "AHMAD BIN ALI" },
-            { label: "IC Number", value: "920505-14-5678" },
-            { label: "Phone Number", value: "+60 12-345 6789" },
+            { label: "Full Name", value: partner?.name || "Unknown Driver" },
+            { label: "IC Number", value: partner?.ic_no || "N/A" },
+            { label: "Phone Number", value: partner?.phone_number || "N/A" },
             {
               label: "Driving License Validity",
-              value: "Valid until 05/05/2027",
+              value: partner?.license_number ? `Valid (Lic: ${partner.license_number})` : "Verified",
             },
-            { label: "Car Model", value: "Toyota Vios 2022" },
+            { label: "Car Model", value: partner?.car_model || "N/A" },
             {
               label: "Vehicle Registration (Plate Number)",
-              value: "WBB 5678 C",
+              value: partner?.car_plate || "N/A",
             },
           ].map((item, index) => (
             <View key={index} style={{ marginBottom: 16 }}>
