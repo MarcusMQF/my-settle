@@ -1,4 +1,5 @@
-import { User, FileText, History, Shield } from 'lucide-react';
+import { User, FileText, History } from 'lucide-react';
+
 
 interface SidebarProps {
     activeTab: 'reports' | 'history' | 'profile';
@@ -9,14 +10,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     return (
         <div className="w-[260px] h-screen bg-white border-r border-gray-100 flex flex-col flex-shrink-0 fixed left-0 top-0 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
             {/* Header */}
-            <div className="h-18 flex items-center px-8 py-6 border-b border-gray-50/50 bg-white/50 backdrop-blur-sm">
-                <div className="flex items-center gap-3 text-blue-900 group cursor-pointer">
-                    <div className="relative">
-                        <Shield className="w-8 h-8 fill-blue-900 group-hover:drop-shadow-lg transition-all duration-300" />
-                        <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                    <span className="text-xl font-bold tracking-tight group-hover:text-blue-700 transition-colors">MySettle</span>
-                </div>
+            <div className="flex items-center px-8 py-6 border-b border-gray-50/50 bg-white/50 backdrop-blur-sm">
+                <h1 className="text-4xl font-black tracking-tighter text-blue-900 cursor-pointer drop-shadow-sm">
+                    PDRM
+                </h1>
             </div>
 
             {/* Navigation */}
@@ -77,15 +74,5 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                 </div>
             </div>
         </div>
-    );
-}
-
-function NavItem({ icon: Icon, label }: { icon: any, label: string }) {
-    return (
-        <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-500 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 group relative overflow-hidden">
-            <Icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-            <span className="text-sm font-medium">{label}</span>
-            <div className="absolute inset-0 bg-gray-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10"></div>
-        </a>
     );
 }
