@@ -41,6 +41,8 @@ async def create_session(user_id: str, db: Session = Depends(get_session)):
         "qr_image": qr_image
     }
 
+from srcs.models.user import User
+
 @router.post("/join")
 async def join_session(otp: str, user_id: str, db: Session = Depends(get_session)):
     statement = select(AccidentSession).where(AccidentSession.otp == otp)
@@ -51,7 +53,6 @@ async def join_session(otp: str, user_id: str, db: Session = Depends(get_session
         raise HTTPException(status_code=404, detail=f"Invalid OTP: Received '{otp}'")
         
     if session_obj.driver_b_id:
-         # simple check to avoid overwriting or if re-joining
          if session_obj.driver_b_id != user_id:
              raise HTTPException(status_code=400, detail="Session full")
     
@@ -60,8 +61,11 @@ async def join_session(otp: str, user_id: str, db: Session = Depends(get_session
     db.add(session_obj)
     db.commit()
     
-    # Notify Listener (Driver A)
-    await event_manager.publish(session_obj.id, "HANDSHAKE_COMPLETE", {"driver_b": user_id})
+    # Notify Listener (Driver A) - Include Driver B's details
+    driver_b = db.get(User, user_id)
+    driver_b_data = driver_b.model_dump() if driver_b else {"id": user_id, "name": "Unknown"}
+
+    await event_manager.publish(session_obj.id, "HANDSHAKE_COMPLETE", {"driver_b": driver_b_data})
     return {"session_id": session_obj.id, "status": "JOINED"}
 
 @router.post("/reconnect")
@@ -84,6 +88,13 @@ async def reconnect_session(otp: str, user_id: str, db: Session = Depends(get_se
     else:
         raise HTTPException(status_code=403, detail="User not part of this session")
 
+    # Fetch Partner Details
+    partner = None
+    if partner_id:
+        partner_obj = db.get(User, partner_id)
+        if partner_obj:
+            partner = partner_obj.model_dump()
+
     # Check Draft Status
     has_submitted = False
     if role == "DRIVER_A" and session_obj.driver_a_draft_id:
@@ -95,7 +106,7 @@ async def reconnect_session(otp: str, user_id: str, db: Session = Depends(get_se
         "session_id": session_obj.id,
         "status": session_obj.status,
         "role": role,
-        "partner_id": partner_id,
+        "partner": partner,
         "has_submitted_draft": has_submitted
     }
 

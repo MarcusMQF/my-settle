@@ -1,9 +1,10 @@
 import { Tabs } from "expo-router";
 import { Home, FileText, Shield } from "lucide-react-native";
-import { useLoginStore } from "../../utils/auth/loginStore";
+import { useAuthStore } from "../../utils/auth/store";
 
 export default function TabLayout() {
-  const { isLoggedIn } = useLoginStore();
+  const { auth } = useAuthStore();
+  const isLoggedIn = !!auth;
 
   return (
     <Tabs
@@ -118,14 +119,7 @@ export default function TabLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
-      <Tabs.Screen
-        name="report-history"
-        options={{
-          href: null,
-          animation: "none",
-          tabBarStyle: { display: "none" },
-        }}
-      />
+
     </Tabs>
   );
 }

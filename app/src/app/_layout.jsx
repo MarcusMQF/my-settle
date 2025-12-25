@@ -1,4 +1,5 @@
 import { useAuth } from '@/utils/auth/useAuth';
+import { AuthModal } from '@/utils/auth/useAuthModal';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -37,16 +38,18 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-        <Stack 
-          screenOptions={{ 
+        <Stack
+          screenOptions={{
             headerShown: false,
             animation: 'none',
             contentStyle: { backgroundColor: '#F9FAFB' },
-          }} 
+          }}
           initialRouteName="index"
         >
           <Stack.Screen name="index" />
+          <Stack.Screen name="profile" />
         </Stack>
+        <AuthModal />
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

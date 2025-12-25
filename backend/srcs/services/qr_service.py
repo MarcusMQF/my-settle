@@ -20,4 +20,5 @@ class QRService:
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
-        return f"data:image/png;base64,{img_str}"
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        return img_str
