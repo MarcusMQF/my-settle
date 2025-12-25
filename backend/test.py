@@ -154,10 +154,21 @@ def run_tests():
     # ========== STEP 4: Utilities ==========
     print(f"\n{Colors.BOLD}>>> STEP 4: Utility Functions{Colors.END}")
 
-    p_map = {"lat": 3.14, "lng": 101.68}
+    p_map = {"lat": 1.54978, "lng": 103.78092}
     log_action("Main", "POST", "SEND", "/util/scene-map", "PENDING", p_map)
     map_res = client.post("/util/scene-map", json=p_map)
-    log_action("Main", "POST", "RECEIVE", "Scene map generated", "OK", {"url": "..." if map_res.get('url') else None})
+    log_action("Main", "POST", "RECEIVE", "Scene map generated", "OK", {"image": "..." if map_res.get('image') else None})
+
+    # Save the base64 image to validation
+    img_b64 = map_res.get('image')
+    if img_b64 and len(img_b64) > 100: # Simple check if it looks like real data
+        import base64
+        try:
+            with open("test_sketch.png", "wb") as f:
+                f.write(base64.b64decode(img_b64))
+            print(f"{Colors.GREEN}   > Saved map sketch to 'test_sketch.png'{Colors.END}")
+        except Exception as e:
+            print(f"{Colors.RED}   > Failed to save map sketch: {e}{Colors.END}")
 
     p_verify = {"image_base64": "fake", "description": "car"}
     log_action("Main", "POST", "SEND", "/util/verify-image", "PENDING", p_verify)
