@@ -15,6 +15,7 @@ import { Asset } from 'expo-asset';
 const repotPolis = require("../../../assets/pdfs/repot_polis_driver_a.pdf");
 const rajahKasar = require("../../../assets/pdfs/rajah_kasar_driver_a.pdf");
 const keputusan = require("../../../assets/pdfs/keputusan_driver_a.pdf");
+const repotPolisB = require("../../../assets/pdfs/repot_polis_driver_b.pdf");
 
 export default function ReportFilesPage() {
     const insets = useSafeAreaInsets();
@@ -25,6 +26,7 @@ export default function ReportFilesPage() {
         { name: "Repot Polis", file: repotPolis, description: "Official Police Report Details" },
         { name: "Rajah Kasar", file: rajahKasar, description: "Rough Sketch of Accident" },
         { name: "Keputusan", file: keputusan, description: "Investigation Decision Result" },
+        { name: "Repot Polis (Driver B)", file: repotPolisB, description: "Official Report (Opponent)" },
     ];
 
     const handleOpenPdf = async (item) => {
@@ -82,7 +84,7 @@ export default function ReportFilesPage() {
                 contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 20 }}
             >
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 16 }}>
-                    Files (3)
+                    Files (4)
                 </Text>
 
                 <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>

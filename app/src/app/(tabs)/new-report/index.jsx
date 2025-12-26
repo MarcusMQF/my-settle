@@ -346,7 +346,7 @@ export default function NewReportPage() {
 
             {/* Verified Badge */}
             <Text style={{ fontSize: 13, color: "#10B981", fontWeight: "600", marginBottom: 12 }}>
-              ✓ Verified via MyDigital ID
+              Verified via MyDigital ID
             </Text>
 
             {/* QR Code Display */}
@@ -386,7 +386,7 @@ export default function NewReportPage() {
               {/* Session Details */}
               <View style={{ marginBottom: 16, alignItems: 'center' }}>
                 <Text style={{ fontSize: 11, color: "#9CA3AF" }}>OTP Code</Text>
-                <Text style={{ fontSize: 24, fontWeight: "800", color: "#1E3A8A", letterSpacing: 2 }}>
+                <Text style={{ fontSize: 16, fontWeight: "800", color: "#1E3A8A", letterSpacing: 1, textAlign: 'center' }}>
                   {otp || '--- ---'}
                 </Text>
               </View>
