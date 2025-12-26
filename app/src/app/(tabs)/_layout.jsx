@@ -120,6 +120,20 @@ export default function TabLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="report-files"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="pdf-viewer"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
     </Tabs>
   );
 }

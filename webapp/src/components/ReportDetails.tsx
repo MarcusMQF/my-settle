@@ -3,6 +3,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
+import satelitImage from '../assets/satelit.png';
+import driverABack from '../assets/driver_a_back.png';
+import driverASide from '../assets/driver_a_side.png';
+import driverAFront from '../assets/driver_a_front.png';
+import driverARight from '../assets/driver_a_right.png';
+import driverADamage from '../assets/driver_a_damage.png';
+import driverBBack from '../assets/driver_b_back.png';
+import driverBFront from '../assets/driver_b_front.png';
+import driverBSide from '../assets/driver_b_side.png';
+import driverBRight from '../assets/driver_b_right.png';
+import driverBDamage from '../assets/driver_b_damage.png';
 
 interface ReportDetailsProps {
     reportId: string;
@@ -59,14 +70,21 @@ const mockReportDetails = {
     }
 };
 
+import ReportSelection from './ReportSelection';
+
 export default function ReportDetails({ reportId, onBack }: ReportDetailsProps) {
     const [fault, setFault] = useState<string | null>(null);
     const [isVerified, setIsVerified] = useState(false);
+    const [showReportSelection, setShowReportSelection] = useState(false);
 
     const handleVerify = () => {
         setIsVerified(true);
-        // In real app, this would generate the PDF
+        setShowReportSelection(true);
     };
+
+    if (showReportSelection) {
+        return <ReportSelection onBack={() => setShowReportSelection(false)} />;
+    }
 
     return (
         <div className="space-y-6 animate-fade-in-up pb-24">
@@ -102,17 +120,31 @@ export default function ReportDetails({ reportId, onBack }: ReportDetailsProps) 
                     <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">Driver A ({mockReportDetails.driverA.plate})</h4>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                            {['Front', 'Back', 'Left', 'Right', 'Damage'].map((view) => (
-                                <PhotoPlaceholder key={`A-${view}`} view={view} />
-                            ))}
+                            {['Front', 'Back', 'Left', 'Right', 'Damage'].map((view) => {
+                                const images: Record<string, string> = {
+                                    'Front': driverAFront,
+                                    'Back': driverABack,
+                                    'Left': driverASide,
+                                    'Right': driverARight,
+                                    'Damage': driverADamage,
+                                };
+                                return <PhotoPlaceholder key={`A-${view}`} view={view} imageSrc={images[view]} />;
+                            })}
                         </div>
                     </div>
                     <div className="border-t border-gray-100 pt-6">
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">Driver B ({mockReportDetails.driverB.plate})</h4>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                            {['Front', 'Back', 'Left', 'Right', 'Damage'].map((view) => (
-                                <PhotoPlaceholder key={`B-${view}`} view={view} />
-                            ))}
+                            {['Front', 'Back', 'Left', 'Right', 'Damage'].map((view) => {
+                                const images: Record<string, string> = {
+                                    'Front': driverBFront,
+                                    'Back': driverBBack,
+                                    'Left': driverBSide,
+                                    'Right': driverBRight,
+                                    'Damage': driverBDamage,
+                                };
+                                return <PhotoPlaceholder key={`B-${view}`} view={view} imageSrc={images[view]} />;
+                            })}
                         </div>
                     </div>
                 </div>
@@ -130,8 +162,8 @@ export default function ReportDetails({ reportId, onBack }: ReportDetailsProps) 
                 </div>
                 <div className="mt-6 border-t border-gray-100 pt-6">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Rajah Kasar (Sketch)</h4>
-                    <div className="aspect-[21/9] bg-white border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center">
-                        <span className="text-gray-400 text-sm">Sketch Canvas Placeholder</span>
+                    <div className="bg-white border-2 border-dashed border-gray-200 rounded-xl overflow-hidden flex items-center justify-center">
+                        <img src={satelitImage} alt="Satelit image" className="w-full h-auto object-contain" />
                     </div>
                 </div>
             </Section>
@@ -337,16 +369,25 @@ function InfoItem({ icon: Icon, label, value }: { icon: any, label: string, valu
     );
 }
 
-function PhotoPlaceholder({ view }: { view: string }) {
+function PhotoPlaceholder({ view, imageSrc }: { view: string, imageSrc?: string }) {
     return (
         <div className="space-y-2">
-            <div className="aspect-video bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer group">
-                <div className="text-center">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 group-hover:bg-blue-200 flex items-center justify-center mx-auto mb-2 transition-colors">
-                        <CloudRain className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
+            <div className="aspect-video bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer group overflow-hidden relative">
+                {imageSrc ? (
+                    <>
+                        <img src={imageSrc} alt={`${view} view`} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1.5 backdrop-blur-[2px]">
+                            <p className="text-[10px] text-center text-white font-bold uppercase tracking-wider">{view}</p>
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 group-hover:bg-blue-200 flex items-center justify-center mx-auto mb-2 transition-colors">
+                            <CloudRain className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
+                        </div>
+                        <span className="text-xs text-gray-400 font-medium group-hover:text-blue-600">{view}</span>
                     </div>
-                    <span className="text-xs text-gray-400 font-medium group-hover:text-blue-600">{view}</span>
-                </div>
+                )}
             </div>
         </div>
     );

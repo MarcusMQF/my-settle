@@ -13,10 +13,12 @@ import {
   MessageSquare,
   ChevronRight,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 
 export default function ReportsPage() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [selectedReport, setSelectedReport] = useState(null);
   const [showVideoCallModal, setShowVideoCallModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -192,7 +194,13 @@ export default function ReportsPage() {
         {mockReports.map((report) => {
           const statusColor = getStatusColor(report.status);
           return (
-            <View
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {
+                if (report.status === 'completed') {
+                  router.push({ pathname: "/(tabs)/report-files", params: { reportId: report.id } });
+                }
+              }}
               key={report.id}
               style={{
                 marginHorizontal: 20,
@@ -339,6 +347,7 @@ export default function ReportsPage() {
                       </Text>
                     </View>
                     <TouchableOpacity
+                      onPress={() => router.push({ pathname: "/(tabs)/report-files", params: { reportId: report.id } })}
                       style={{
                         backgroundColor: "#10B981",
                         paddingVertical: 8,
@@ -358,7 +367,7 @@ export default function ReportsPage() {
                 <Text style={{ fontSize: 12, color: "#6B7280" }}>View Details</Text>
                 <ChevronRight color="#6B7280" size={16} />
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
 

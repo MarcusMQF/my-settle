@@ -2,3 +2,4 @@ __pycache__
 .env
 venv/
 backend/temp_qr.png
+/docs

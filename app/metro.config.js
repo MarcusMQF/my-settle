@@ -11,6 +11,7 @@ const {
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
+config.resolver.assetExts.push('pdf'); // Enable PDF support as assets
 
 const WEB_ALIASES = {
   'expo-secure-store': path.resolve(__dirname, './polyfills/web/secureStore.web.ts'),
@@ -127,7 +128,7 @@ const originalGetTransformOptions = config.transformer.getTransformOptions;
 config.transformer = {
   ...config.transformer,
   getTransformOptions: async (entryPoints, options) => {
-    if (options.dev === false) { 
+    if (options.dev === false) {
       fs.rmSync(cacheDir, { recursive: true, force: true });
       fs.mkdirSync(cacheDir);
     }

@@ -12,6 +12,7 @@ import { ArrowRight, MapPin, ChevronDown, Info, Clock, Minus, Plus } from "lucid
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import ProgressSteps from "../../../components/ProgressSteps";
+import satelitImage from "../../../../assets/images/satelit.png";
 
 import { useSessionStore } from "../../../utils/session/store";
 
@@ -943,27 +944,12 @@ export default function SceneDetailsPage() {
             }}
           >
             <Image
-              source={require("../../../../assets/images/mock_map.png")}
+              source={satelitImage}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
 
-            {/* Google Logo */}
-            <View
-              style={{
-                position: "absolute",
-                bottom: 8,
-                left: 8,
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                paddingHorizontal: 6,
-                paddingVertical: 2,
-                borderRadius: 2,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "#5F6368" }}>
-                Google
-              </Text>
-            </View>
+
 
             {/* Zoom Controls */}
             <View
@@ -1000,27 +986,7 @@ export default function SceneDetailsPage() {
               </TouchableOpacity>
             </View>
 
-            {/* Map Type Toggle */}
-            <View
-              style={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                backgroundColor: "#fff",
-                borderRadius: 4,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.2,
-                shadowRadius: 2,
-                elevation: 2,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "600", color: "#5F6368" }}>
-                Satellite
-              </Text>
-            </View>
+
           </View>
 
           {/* Coordinates Display */}

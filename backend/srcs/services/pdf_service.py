@@ -185,13 +185,13 @@ class PDFService:
             ('SPAN', (2,9), (-1,9)), # Emel
         ]))
         elements.append(t_pengadu)
-        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Spacer(1, 0.1*inch))
         
         # 6. Pengadu Menyatakan
         elements.append(Paragraph("Pengadu Menyatakan :", style_bold_small))
-        elements.append(Spacer(1, 0.1*inch))
+        elements.append(Spacer(1, 0.05*inch))
         # Upper case body text
-        elements.append(Paragraph(data.keterangan_kes.upper(), ParagraphStyle('BodyUpper', parent=styles['Normal'], fontSize=9, leading=11)))
+        elements.append(Paragraph(data.keterangan_kes.upper(), ParagraphStyle('BodyUpper', parent=styles['Normal'], fontSize=9, leading=10)))
         elements.append(Spacer(1, 1*inch))
         
         # 7. Signatures
