@@ -18,7 +18,7 @@ Current accident reporting in Malaysia is inefficient and stressful:
 
 ## System Architecture
 
-![System Architecture](public/arhitecture.png)
+![System Architecture](public/architecture.png)
 
 ## The Solution
 
