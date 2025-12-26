@@ -8,10 +8,15 @@ interface ReportSelectionProps {
 export default function ReportSelection({ onBack }: ReportSelectionProps) {
     const [selectedDriver, setSelectedDriver] = useState<'A' | 'B' | null>(null);
 
-    const reports = [
+    const driverAReports = [
         { name: 'Repot Polis', file: 'repot_polis_driver_a.pdf' },
+        { name: 'Repot Polis (Driver B)', file: 'repot_polis_driver_b.pdf' },
         { name: 'Rajah Kasar', file: 'rajah_kasar_driver_a.pdf' },
         { name: 'Keputusan', file: 'keputusan_driver_a.pdf' },
+    ];
+
+    const driverBReports = [
+        { name: 'Repot Polis', file: 'repot_polis_driver_b.pdf' },
     ];
 
     const [viewingPdf, setViewingPdf] = useState<{ name: string, file: string } | null>(null);
@@ -42,7 +47,7 @@ export default function ReportSelection({ onBack }: ReportSelectionProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {reports.map((report) => (
+                    {driverAReports.map((report) => (
                         <div key={report.name} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                             <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center mb-4">
                                 <FileText className="w-6 h-6 text-red-600" />
@@ -77,11 +82,21 @@ export default function ReportSelection({ onBack }: ReportSelectionProps) {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                        <FileText className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 font-medium">No reports generated yet</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {driverBReports.map((report) => (
+                        <div key={report.name} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                            <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center mb-4">
+                                <FileText className="w-6 h-6 text-red-600" />
+                            </div>
+                            <h3 className="font-bold text-gray-900 mb-2">{report.name}</h3>
+                            <button
+                                onClick={() => setViewingPdf(report)}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                            >
+                                View Document
+                            </button>
+                        </div>
+                    ))}
                 </div>
             </div>
         )
